@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "wpt-tools"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+license = "AGPL-3.0"
+readme = "README.md"
+packages = [{include = "wpt_tools"}]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.12"
+numpy = "^1.24.2"
+matplotlib = "^3.7.0"
+scikit-rf = "^0.24.1"
+scipy = "^1.10.0"
+scikit-learn = "^1.2.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
