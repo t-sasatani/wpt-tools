@@ -162,6 +162,8 @@ class wpt_eval:
 
         max_eff_opt = 0
         max_f_index = None
+        max_x_opt = 0
+        max_r_opt = 0
 
         if self.target_f == None:
             print('execute set_f_target_range() before this operation')
@@ -195,7 +197,11 @@ class wpt_eval:
                 eff_opt.append(eff_opt_temp)
 
                 if max_eff_opt < eff_opt_temp:
-                    max_f_index = f_index
+                    max_f_plot = f_temp
+                    max_eff_opt = eff_opt_temp
+                    max_r_opt = r_opt_temp
+                    max_x_opt = x_opt_temp
+    
         if show_plot == 1:
             fig, axs = plt.subplots(1, 3, figsize=(18, 4))
 
@@ -218,11 +224,6 @@ class wpt_eval:
             axs[2].axvline(self.target_f, color='gray', lw=1)
 
             fig.tight_layout()
-
-        max_f_plot = f_plot[max_f_index]
-        max_eff_opt = eff_opt[max_f_index]
-        max_r_opt = r_opt[max_f_index]
-        max_x_opt = x_opt[max_f_index]
 
         if show_data == 1:
             print('Target frequency: %.3e' % (max_f_plot))
