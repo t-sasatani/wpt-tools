@@ -8,7 +8,7 @@ readme = "README.md"
 packages = [{include = "wpt_tools"}]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"
+python = ">=3.10,<3.12"
 numpy = "^1.24.2"
 matplotlib = "^3.7.0"
 scipy = "^1.12"
