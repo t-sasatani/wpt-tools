@@ -1,34 +1,47 @@
-# VNA WPT measurement toolchain for PicoVNA 106
-# Takuya Sasatani
-
-# Software
-# - Windows 11
-# - Anaconda 3 (Python 3.9.7)
-# - PicoVNA 3 software and drivers need to be installed
-
-# Hardware
-# - PicoVNA 106
-# - Calibration kit (Calibration file needs to be obtained using PicoVNA 3 software before measurement)
+"""
+Analysis code for wireless power transfer systems.
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt
-import tkinter as tk
-from tkinter import filedialog
 
 import skrf as rf
-from pylab import *
-from skrf import Network, Frequency
 import math
 
 import sys
 
 from scipy.optimize import curve_fit
 from scipy.optimize import fmin
-import scipy.optimize as optimize
 import sklearn.metrics as metrics
 
+from logging import getLogger
+import wpt_tools.logger
 
-class wpt_eval:
+wpt_tools.logger.init_logger('mymodule.log') # Initialize logger
+logger = getLogger(__name__) # Get a logger for this module
+
+class nw_tools:
+    """
+    Class for analyzing wireless power transfer systems based on touchstone (`.snp`) files.
+
+    Attributes
+    ----------
+    nw : skrf.network.Network
+        Network object representing the touchstone file.
+    f_narrow_index_start : type
+        (Description of f_narrow_index_start)
+    f_narrow_index_stop : type
+        (Description of f_narrow_index_stop)
+    target_f_index : type
+        (Description of target_f_index)
+    sweeppoint : numpy.ndarray
+        Sweep points in the frequency range of the network.
+    range_f : type
+        (Description of range_f)
+    target_f : type
+        (Description of target_f)
+    """
+
     def __init__(self):
         self.nw = None
         self.f_narrow_index_start = None
@@ -38,121 +51,116 @@ class wpt_eval:
         self.range_f = None
         self.target_f = None
 
-    def import_touchstone(self, filename = ''):
-        if filename == '':
-            root = tk.Tk()
-            root.withdraw()
-            root.update()
-            filename = filedialog.askopenfilename(initialdir="./")
-            root.quit()
+    def import_touchstone(self, filename):
+        """
+        Load touchstone file into the network. 
 
+        Parameters
+        ----------
+        filename : str
+            Name of the touchstone file.
+
+        Raises
+        ------
+        ValueError
+            If filename is not provided or the file does not exist.
+        """
+        if filename is None:
+            raise ValueError('Filename must be provided')
+            
+        try:
+            self.nw = rf.Network(filename)
+        except FileNotFoundError:
+            raise ValueError(f"File '{filename}' not found")
         
-        self.nw = rf.Network(filename)
         self.sweeppoint = np.size(self.nw.frequency.f)
-        print(filename)
+        print(f'Loaded touchstone file: {filename}')
 
-    def export_touchstone(self, filename):
-        self.nw.write_touchstone(filename)
-
-    def picoVNA_measure(self, cal_file, start_f, end_f, sweep_points, power_level, RBW, z0, progid):
-        import win32com.client
-        picoVNACOMObj = win32com.client.Dispatch(progid)
-
-        # Connect PicoVNA
-        # 0 probably means no VNAs are found
-        print("Connecting VNA")
-        findVNA = picoVNACOMObj.FND()
-        print('VNA #' + str(findVNA) + ' Loaded')
-
-        # Set frequency plan
-        # parameters need to be same as calibration file
-        print("Set frequency plan")
-        step_f = (end_f - start_f)/(sweep_points - 1)
-
-        ans_freq_plan = picoVNACOMObj.SetFreqPlan(
-            start_f/1e6, step_f/1e6, sweep_points, power_level, RBW)
-        print("Result " + str(ans_freq_plan))
-
-        # Load calibration file and measure
-        print("Load Calibration")
-        ans_calibration = picoVNACOMObj.LoadCal(cal_file)
-        print("Result " + str(ans_calibration))
-
-        print("Making Measurement")
-        picoVNACOMObj.Measure('ALL')
-
-        print("getting full S-matrix (RI form)")
-
-        spar_list = {}
-        for rx_port in range(1, 3):
-            for tx_port in range(1, 3):
-                for ri in ["real", "imag"]:
-                    temp_spar = picoVNACOMObj.GetData(
-                        "S"+str(rx_port)+str(tx_port), ri, 0)
-                    spar_list["s{0}{1}_{2}".format(rx_port, tx_port, ri)] = np.array(
-                        temp_spar.split(',')).astype(float)
-
-        # Convert PicoVNA output to Scikit.rf NW object
-        f = spar_list['s11_real'][0::2]
-        s11 = spar_list['s11_real'][1::2] + 1j*spar_list['s11_imag'][1::2]
-        s21 = spar_list['s21_real'][1::2] + 1j*spar_list['s21_imag'][1::2]
-        s12 = spar_list['s12_real'][1::2] + 1j*spar_list['s12_imag'][1::2]
-        s22 = spar_list['s22_real'][1::2] + 1j*spar_list['s22_imag'][1::2]
-
-        # define a 2x2 s-matrix at a given frequency
-        def si(i):
-            ''' s-matrix at frequency i'''
-            return np.array(([s11[i], s12[i]], [s21[i], s22[i]]), dtype='complex')
-
-        # number of frequency points
-        self.sweeppoint = np.size(f)
-
-        # stack matrices along 3rd axis to create (2x2xN) array
-        s = si(0)
-        for i in range(1, self.sweeppoint):
-            s = np.dstack([s, si(i)])
-
-        # re-shape into (Nx2x2)
-        s = np.swapaxes(s, 0, 2)
-
-        f_obj = rf.Frequency.from_f(f, unit='hz')
-
-        # create network object with frequency converted to GHz units
-        self.nw = rf.Network(name='nw_from_numpy', s=s, frequency=f_obj, z0=z0)
-        print(self)
-
-        picoVNACOMObj.CloseVNA()
-        print("VNA Closed")
-
-    # Narrow down frequency range and find index of target frequency
     def set_f_target_range(self, target_f, range_f):
+        """
+        Set the target frequency range for the analysis.
+
+        This attempts to find an index range close to the target frequency with a given range. The closest
+        frequency is stored in `self.target_f_index`.
+
+        Parameters
+        ----------
+        target_f : float
+            Target frequency.
+        range_f : float
+            The frequency range centered around the target frequency.
+
+        Note
+        ----
+        This method relies on previously imported frequencies via the `import_touchstone` method. If no
+        frequency data is found, this function does nothing.
+        """
+
         self.target_f = target_f
         self.range_f = range_f
-
+        
+        # Initialize start and stop indices to the sweep point extremes.
         self.f_narrow_index_start = self.sweeppoint
         self.f_narrow_index_stop = 0
 
         d_target_f = self.range_f
 
         for f_index in range(self.sweeppoint):
+            # Check if the frequency indexed by f_index falls within the target range.
             if abs(target_f - self.nw.frequency.f[f_index]) < range_f/2:
+                # Update start and stop indices.
                 if self.f_narrow_index_start > f_index:
                     self.f_narrow_index_start = f_index
                 if self.f_narrow_index_stop < f_index:
                     self.f_narrow_index_stop = f_index
 
+                # Preparing to update the target index if this frequency is closest to the target.
                 f_temp = self.nw.frequency.f[f_index]
 
+                # Update the target index if this is the closest frequency to the target.
                 if abs(target_f - f_temp) < d_target_f:
                     d_target_f = abs(target_f - f_temp)
                     self.target_f_index = f_index
-
+                    
     # Efficiency and optimal load analysis (for general 2-port networks)
-
     # Reference: Y. Narusue, et al., "Load optimization factors for analyzing the efficiency of wireless power transfer systems using two-port network parameters," IEICE ELEX, 2020.
     # Unstable when far from resonant frequency (probably because to S to Z conversion becomes unstable)
 
     def efficiency_load_analysis(self, rx_port=2, show_plot=1, show_data=1):
+        """
+        Perform efficiency and optimal load analysis (for general 2-port networks).
+
+        The function is unstable when far from the resonant frequency.
+        Reference: Y. Narusue, et al., "Load optimization factors for analyzing the 
+        efficiency of wireless power transfer systems using two-port network parameters," 
+        IEICE ELEX, 2020.
+
+        Parameters
+        ----------
+        rx_port : int, optional
+            The port to receive on, either 1 or 2 (default is 2).
+        show_plot : int, optional
+            Whether to show a plot of the analysis (default is 1).
+        show_data : int, optional
+            Whether to print data from the analysis (default is 1).
+
+        Returns
+        -------
+        max_f_plot : float
+            Frequency at maximum efficiency.
+        max_eff_opt : float
+            Maximum efficiency.
+        max_r_opt : float
+            Optimum resistance for maximum efficiency.
+        max_x_opt : float
+            Optimum reactance for maximum efficiency.
+
+        Raises
+        ------
+        SystemExit
+            If the method 'set_f_target_range' was not executed before this operation.
+        """ 
+
         f_plot = []
         r_det = []
         kq2 = []
@@ -161,7 +169,6 @@ class wpt_eval:
         eff_opt = []
 
         max_eff_opt = 0
-        max_f_index = None
         max_x_opt = 0
         max_r_opt = 0
 
