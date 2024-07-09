@@ -20,6 +20,7 @@ myst-parser = "^3.0.1"
 pydantic = "^2.8.2"
 sphinx-rtd-theme = "^2.0.0"
 toml = "^0.10.2"
+colorlog = "^6.8.2"
 
 
 [tool.poetry.group.dev.dependencies]
