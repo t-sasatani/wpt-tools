@@ -1,8 +1,6 @@
 import pytest
 import os
-from unittest.mock import patch, MagicMock
 import numpy as np
-import logging
 import skrf as rf
 
 # Assuming the nw_tools class is in a module named nw_tools_module
