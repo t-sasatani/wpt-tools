@@ -22,19 +22,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+          cache: pip
 
       - name: Install Dependencies
-        run: poetry install --no-interaction
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov  # Include additional requirements if any
 
       - name: Run Tests
-        run: poetry run pytest test --cov=./slack_api_decorator --cov-report=xml
-      - name: Upload coverage to Codecov
+        run: pytest tests --cov=./slack_api_decorator --cov-report=xml
 
-        if: ${{ matrix.python-version==3.12 }}
+      - name: Upload coverage to Codecov
+        if: ${{ matrix.python-version == '3.12' }}
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
