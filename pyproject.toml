@@ -18,6 +18,7 @@ scikit-rf = "^0.32.0"
 pydantic = "^2.8.2"
 toml = "^0.10.2"
 pytest = "^8.2.2"
+pytest-cov = "^5.0.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.26.0"
@@ -28,6 +29,7 @@ myst-parser = "^3.0.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
 
 
 [tool.poetry.group.docs.dependencies]
