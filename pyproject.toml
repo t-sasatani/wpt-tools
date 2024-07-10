@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "wpt-tools"
+name = "wpt_tools"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["t-sasatani <sasatani.dev@gmail.com>"]
 license = "AGPL-3.0"
 readme = "README.md"
 packages = [{include = "wpt_tools"}]
