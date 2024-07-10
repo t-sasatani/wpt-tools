@@ -51,7 +51,7 @@ class nw_tools:
         self.range_f = None
         self.target_f = None
 
-    def import_touchstone(self, filename):
+    def import_touchstone(self, filename: str) -> None:
         """
         Load touchstone file into the network. 
 
@@ -74,9 +74,9 @@ class nw_tools:
             raise ValueError(f"File '{filename}' not found")
         
         self.sweeppoint = np.size(self.nw.frequency.f)
-        print(f'Loaded touchstone file: {filename}')
+        logger.info(f'Loaded touchstone file: {filename}')
 
-    def set_f_target_range(self, target_f, range_f):
+    def set_f_target_range(self, target_f: float, range_f: float) -> None:
         """
         Set the target frequency range for the analysis.
 
@@ -121,12 +121,8 @@ class nw_tools:
                 if abs(target_f - f_temp) < d_target_f:
                     d_target_f = abs(target_f - f_temp)
                     self.target_f_index = f_index
-                    
-    # Efficiency and optimal load analysis (for general 2-port networks)
-    # Reference: Y. Narusue, et al., "Load optimization factors for analyzing the efficiency of wireless power transfer systems using two-port network parameters," IEICE ELEX, 2020.
-    # Unstable when far from resonant frequency (probably because to S to Z conversion becomes unstable)
 
-    def efficiency_load_analysis(self, rx_port=2, show_plot=1, show_data=1):
+    def efficiency_load_analysis(self, rx_port: int=2, show_plot:bool=True, show_data:bool=True):
         """
         Perform efficiency and optimal load analysis (for general 2-port networks).
 
@@ -142,7 +138,7 @@ class nw_tools:
         show_plot : int, optional
             Whether to show a plot of the analysis (default is 1).
         show_data : int, optional
-            Whether to print data from the analysis (default is 1).
+            Whether to logger.info data from the analysis (default is 1).
 
         Returns
         -------
@@ -172,9 +168,8 @@ class nw_tools:
         max_x_opt = 0
         max_r_opt = 0
 
-        if self.target_f == None:
-            print('execute set_f_target_range() before this operation')
-            sys.exit()
+        if self.target_f is None:
+            raise ValueError('execute set_f_target_range() before this operation')
 
         for f_index in range(self.sweeppoint):
             if abs(self.target_f - self.nw.frequency.f[f_index]) < self.range_f/2:
@@ -185,7 +180,7 @@ class nw_tools:
                     Z11 = self.nw.z[f_index, 1, 1]
                     Z22 = self.nw.z[f_index, 0, 0]
                 else:
-                    print('set rx_port to 1 or 2.')
+                    logger.info('set rx_port to 1 or 2.')
                     sys.exit()
                 Zm = self.nw.z[f_index, 0, 1]
                 f_temp = self.nw.frequency.f[f_index]
@@ -209,7 +204,7 @@ class nw_tools:
                     max_r_opt = r_opt_temp
                     max_x_opt = x_opt_temp
     
-        if show_plot == 1:
+        if show_plot is True:
             fig, axs = plt.subplots(1, 3, figsize=(18, 4))
 
             axs[0].plot(f_plot, eff_opt)
@@ -232,11 +227,11 @@ class nw_tools:
 
             fig.tight_layout()
 
-        if show_data == 1:
-            print('Target frequency: %.3e' % (max_f_plot))
-            print('Maximum efficiency: %.2f' % (max_eff_opt))
-            print('Optimum Re(Zload): %.2f' % (max_r_opt))
-            print('Optimum Im(Zload): %.2f' % (max_x_opt))
+        if show_data is True:
+            logger.info('Target frequency: %.3e' % (max_f_plot))
+            logger.info('Maximum efficiency: %.2f' % (max_eff_opt))
+            logger.info('Optimum Re(Zload): %.2f' % (max_r_opt))
+            logger.info('Optimum Im(Zload): %.2f' % (max_x_opt))
 
         return max_f_plot, max_eff_opt, max_r_opt, max_x_opt
 
@@ -277,7 +272,7 @@ class nw_tools:
     # Curve-fitting and Z-matrix plot (narrow-range)
     def plot_z_narrow_fit(self, show_plot = 1, show_fit = 1):
         if self.target_f == None:
-            print('execute set_f_target_range() before this operation')
+            logger.info('execute set_f_target_range() before this operation')
             sys.exit()
 
         def series_lcr_xself(x, ls, cs):
@@ -294,7 +289,8 @@ class nw_tools:
         ls1, cs1 = popt
         r2 = metrics.r2_score(self.nw.z[self.f_narrow_index_start:self.f_narrow_index_stop, 0, 0].imag, series_lcr_xself(
             self.nw.frequency.f[self.f_narrow_index_start:self.f_narrow_index_stop], ls1, cs1))
-        if show_fit == 1: print('R2 for fitting Ls1, Cs1: %f' % (r2))
+        if show_fit is True:
+            logger.info('R2 for fitting Ls1, Cs1: %f' % (r2))
 
         popt, _ = curve_fit(series_lcr_rself, self.nw.frequency.f[self.f_narrow_index_start:self.f_narrow_index_stop],
                             self.nw.z[self.f_narrow_index_start:self.f_narrow_index_stop, 0, 0].real, p0=np.asarray([1]), maxfev=10000)
@@ -307,7 +303,8 @@ class nw_tools:
 
             r2 = metrics.r2_score(self.nw.z[self.f_narrow_index_start:self.f_narrow_index_stop, 1, 1].imag, series_lcr_xself(
                 self.nw.frequency.f[self.f_narrow_index_start:self.f_narrow_index_stop], ls2, cs2))
-            if show_fit == 1: print('R2 for fitting Ls2, Cs2: %f' % (r2))
+            if show_fit == 1:
+                logger.info('R2 for fitting Ls2, Cs2: %f' % (r2))
 
             popt, _ = curve_fit(series_lcr_rself, self.nw.frequency.f[self.f_narrow_index_start:self.f_narrow_index_stop],
                                 self.nw.z[self.f_narrow_index_start:self.f_narrow_index_stop, 1, 1].real, p0=np.asarray([1]), maxfev=10000)
@@ -318,22 +315,22 @@ class nw_tools:
             lm = popt
             r2 = metrics.r2_score(self.nw.z[self.f_narrow_index_start:self.f_narrow_index_stop, 0, 1].imag, series_lcr_xm(
                 self.nw.frequency.f[self.f_narrow_index_start:self.f_narrow_index_stop], lm))
-            #print('R2 for fitting Lm: %f' % (r2))
+            #logger.info('R2 for fitting Lm: %f' % (r2))
         
         if show_fit == 1: 
-            print('Self impedance at target frequency\n')
-            print('Re(Z11): %.2e\nIm(Z11): %.2e\n' % (self.nw.z[self.target_f_index, 0, 0].real, self.nw.z[self.target_f_index, 0, 0].imag))
+            logger.info('Self impedance at target frequency\n')
+            logger.info('Re(Z11): %.2e\nIm(Z11): %.2e\n' % (self.nw.z[self.target_f_index, 0, 0].real, self.nw.z[self.target_f_index, 0, 0].imag))
 
             if self.nw.nports == 2:
-                print('Re(Z22): %.2e\nIm(Z22) %.2e\n' % (self.nw.z[self.target_f_index, 1, 1].real, self.nw.z[self.target_f_index, 1, 1].imag))
+                logger.info('Re(Z22): %.2e\nIm(Z22) %.2e\n' % (self.nw.z[self.target_f_index, 1, 1].real, self.nw.z[self.target_f_index, 1, 1].imag))
 
-            print('Fitting values assuming a pair of series LCR resonators\n')
-            print('Ls1: %.2e, Cs1: %.2e, Rs1: %.2e, f_1: %.3e, Q_1 (approximate, @%.3e Hz): %.2e' %
+            logger.info('Fitting values assuming a pair of series LCR resonators\n')
+            logger.info('Ls1: %.2e, Cs1: %.2e, Rs1: %.2e, f_1: %.3e, Q_1 (approximate, @%.3e Hz): %.2e' %
                 (ls1, cs1, rs1, 1/(2*np.pi*np.sqrt(ls1*cs1)), self.target_f, 2*np.pi*self.target_f*ls1/rs1))
             if self.nw.nports == 2:
-                print('Ls2: %.2e, Cs2: %.2e, Rs2: %.2e, f_2: %.3e, Q_2 (approximate, @%.3e Hz): %.2e' %
+                logger.info('Ls2: %.2e, Cs2: %.2e, Rs2: %.2e, f_2: %.3e, Q_2 (approximate, @%.3e Hz): %.2e' %
                 (ls2, cs2, rs2, 1/(2*np.pi*np.sqrt(ls2*cs2)), self.target_f, 2*np.pi*self.target_f*ls2/rs2))
-                print('Lm: %.2e, km: %.3f' % (lm, lm/np.sqrt(ls1*ls2)))
+                logger.info('Lm: %.2e, km: %.3f' % (lm, lm/np.sqrt(ls1*ls2)))
         
         if show_plot == 1:
             if self.nw.nports == 1:
@@ -418,14 +415,14 @@ class nw_tools:
         elif rx_port == 2:
             lrx = ls2
         else:
-            print('set rx_port parameter to 1 or 2')
+            logger.info('set rx_port parameter to 1 or 2')
             sys.exit()
 
-        print('Target frequency: %.3e' % (max_f_plot))
-        print('Maximum efficiency: %.2f' % (max_eff_opt))
-        print('Receiver inductance: %.2e' % (lrx))
-        print('Optimum load: %.2f' % (max_r_opt))
-        print('Target Rload: %.2f\n' % (rload))
+        logger.info('Target frequency: %.3e' % (max_f_plot))
+        logger.info('Maximum efficiency: %.2f' % (max_eff_opt))
+        logger.info('Receiver inductance: %.2e' % (lrx))
+        logger.info('Optimum load: %.2f' % (max_r_opt))
+        logger.info('Target Rload: %.2f\n' % (rload))
         
 
         if c_network == 'CpCsRl':
@@ -435,7 +432,7 @@ class nw_tools:
             def Zerror(params):
                 return np.linalg.norm([Z(params).real-max_r_opt, Z(params).imag])
         sol = fmin(Zerror, np.array([100e-12,100e-12]),xtol=1e-9, ftol=1e-9)
-        print(sol)
+        logger.info(sol)
 
     def optimal_load_plot(self, min_rez, min_imz, max_rez, max_imz, step_rez, step_imz, input_voltage, rx_port=2):
     # Optimal load visualization
@@ -453,7 +450,7 @@ class nw_tools:
             Z11 = self.nw.z[self.target_f_index, 1, 1]
             Z22 = self.nw.z[self.target_f_index, 0, 0]
         else:
-            print('set rx_port to 1 or 2.')
+            logger.info('set rx_port to 1 or 2.')
             sys.exit()
         
         Zm = self.nw.z[self.target_f_index, 0, 1]
