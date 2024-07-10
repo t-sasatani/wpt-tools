@@ -1,5 +1,10 @@
+import pytest
+
 def test_import_wpt_tools():
+    """
+    Test that the wpt_tools module can be imported successfully.
+    """
     try:
         import wpt_tools
-    except ImportError as e:
-        raise AssertionError(f"Importing wpt_tools failed: {e}")
+    except ImportError:
+        pytest.fail("Failed to import wpt_tools")
