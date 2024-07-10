@@ -31,12 +31,4 @@ jobs:
         run: pip install -e .[tests]
       
       - name: run pytest
-        run: |
-          set -o pipefail
-          python -m pytest --junitxml=pytest.xml --cov-report=term-missing --cov=src tests/ | tee pytest-coverage.txt
-
-      - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@v1.1.47
-        with:
-          pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: ./pytest.xml
+        run: python -m pytest
