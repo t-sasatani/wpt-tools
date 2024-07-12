@@ -9,7 +9,8 @@ wpt_tools documentation
 
 .. toctree::
    :maxdepth: 2
-   
+
+   usage
    analysis
    logger
    instrument
