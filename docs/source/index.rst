@@ -26,6 +26,7 @@ Resources
 
 - GitHub: https://github.com/t-sasatani/wpt-tools
 - Readthedocs: https://wpt-tools.readthedocs.io/en/latest/
+- PyPI: https://pypi.org/project/wpt_tools/
 
 Guide
 ----------

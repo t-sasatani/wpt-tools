@@ -23,7 +23,7 @@ def init_logger(filename='app.log'):
 
     """
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(logging.INFO)
 
     # Create a file handler
     file_handler = logging.FileHandler(filename)
