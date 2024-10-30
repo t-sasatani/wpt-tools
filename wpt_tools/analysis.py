@@ -164,6 +164,7 @@ class nw_tools:
         x_opt = []
         eff_opt = []
 
+        max_f_plot = 0
         max_eff_opt = 0
         max_x_opt = 0
         max_r_opt = 0
@@ -198,12 +199,22 @@ class nw_tools:
                 x_opt.append(x_opt_temp)
                 eff_opt.append(eff_opt_temp)
 
+                try:
+                    assert eff_opt_temp <= 1 and eff_opt_temp >= 0
+                except AssertionError:
+                    logger.warning('Efficiency out of range (eff: %s, freq: %s). Check the measurement data or narrow frequency range.' % (eff_opt_temp, f_temp))
                 if max_eff_opt < eff_opt_temp:
                     max_f_plot = f_temp
                     max_eff_opt = eff_opt_temp
                     max_r_opt = r_opt_temp
                     max_x_opt = x_opt_temp
-    
+
+        try:
+            assert (max_eff_opt > 0)
+        except AssertionError:
+            logger.info('No valid data found. Check the target frequency and range.')
+            sys.exit()
+
         if show_plot is True:
             fig, axs = plt.subplots(1, 3, figsize=(18, 4))
 
