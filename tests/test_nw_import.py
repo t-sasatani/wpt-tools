@@ -3,9 +3,7 @@ import os
 import numpy as np
 import skrf as rf
 
-# Assuming the nw_tools class is in a module named nw_tools_module
 from wpt_tools.analysis import nw_tools
-
 
 @pytest.fixture
 def sample_touchstone_file(tmp_path):
