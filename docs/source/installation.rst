@@ -10,8 +10,7 @@ To set up the development environment, clone the GitHub repository and install t
 
    git clone https://github.com/t-sasatani/wpt-tools.git
    cd wpt-tools
-   poetry shell
-   poetry install
+   uv sync
 
 Via pip
 -------

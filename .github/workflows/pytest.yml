@@ -29,21 +29,19 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
-      - name: Install Poetry
+      - name: Install uv
         run: |
           python -m pip install --upgrade pip
-          pip install poetry
-          # Add poetry to PATH
-          echo "${HOME}/.local/bin" >> $GITHUB_PATH
-          
-      - name: Check Poetry Installation
-        run: poetry --version
+          pip install uv
+
+      - name: Create virtual environment
+        run: uv venv
 
       - name: Install Dependencies
-        run: poetry install --no-interaction
+        run: uv pip install -e ".[dev]"
 
       - name: Run Tests
-        run: poetry run pytest --cov-branch --cov-report=xml
+        run: uv run pytest --cov-branch --cov-report=xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
