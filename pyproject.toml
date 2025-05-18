@@ -20,13 +20,20 @@ dependencies = [
     "pytest-cov>=6.1.0,<7",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "ipykernel>=6.26.0,<7",
+    "sphinx>=8.2.3,<8.3",
+    "myst-parser>=4.0.1,<5",
+    "sphinx-press-theme>=0.9.1,<0.10",
+]
+
 [dependency-groups]
 dev = [
     "ipykernel>=6.26.0,<7",
     "sphinx>=8.2.3,<8.3",
     "myst-parser>=4.0.1,<5",
     "sphinx-press-theme>=0.9.1,<0.10",
-    "sphinx-rtd-theme>=2.0.0,<3",
 ]
 
 [tool.uv]

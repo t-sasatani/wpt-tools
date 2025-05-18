@@ -1386,6 +1386,14 @@ dependencies = [
     { name = "toml" },
 ]
 
+[package.optional-dependencies]
+dev = [
+    { name = "ipykernel" },
+    { name = "myst-parser" },
+    { name = "sphinx" },
+    { name = "sphinx-press-theme" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "ipykernel" },
@@ -1397,7 +1405,9 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "colorlog", specifier = ">=6.8.2,<7" },
+    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.26.0,<7" },
     { name = "matplotlib", specifier = ">=3.10.3,<4" },
+    { name = "myst-parser", marker = "extra == 'dev'", specifier = ">=4.0.1,<5" },
     { name = "numpy", specifier = ">=2.2.6,<3" },
     { name = "pillow", specifier = ">=11.2.1,<12" },
     { name = "pydantic", specifier = ">=2.11.4,<3" },
@@ -1406,8 +1416,11 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.2.1,<2" },
     { name = "scikit-rf", specifier = ">=1.7.0,<1.8" },
     { name = "scipy", specifier = "~=1.15.3" },
+    { name = "sphinx", marker = "extra == 'dev'", specifier = ">=8.2.3,<8.3" },
+    { name = "sphinx-press-theme", marker = "extra == 'dev'", specifier = ">=0.9.1,<0.10" },
     { name = "toml", specifier = ">=0.10.2,<0.11" },
 ]
+provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
