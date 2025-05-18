@@ -26,6 +26,7 @@ dev = [
     "sphinx>=8.2.3,<8.3",
     "myst-parser>=4.0.1,<5",
     "sphinx-press-theme>=0.9.1,<0.10",
+    "sphinx-rtd-theme>=2.0.0,<3",
 ]
 
 [tool.uv]

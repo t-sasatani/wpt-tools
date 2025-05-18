@@ -19,7 +19,8 @@ build:
   tools:
     python: "3.11"
   jobs:
-    post_create_environment:
-      - pip install poetry
-    post_install:
-      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install --with docs
+    pre_install:
+      - pip install --upgrade pip
+      - pip install uv
+    install:
+      - uv pip install -e ".[dev]" --system
