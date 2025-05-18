@@ -1408,7 +1408,7 @@ requires-dist = [
     { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.26.0,<7" },
     { name = "matplotlib", specifier = ">=3.10.3,<4" },
     { name = "myst-parser", marker = "extra == 'dev'", specifier = ">=4.0.1,<5" },
-    { name = "numpy", specifier = ">=1.26.0,<2.1.0" },
+    { name = "numpy", specifier = ">=1.26.0" },
     { name = "pillow", specifier = ">=11.2.1,<12" },
     { name = "pydantic", specifier = ">=2.11.4,<3" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
