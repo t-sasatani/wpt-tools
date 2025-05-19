@@ -3,15 +3,17 @@ Logger functions.
 """
 
 import logging
+
 from colorlog import ColoredFormatter
 
-def init_logger(filename='app.log'):
+
+def init_logger(filename="app.log"):
     """
     Method for initializing logs.
 
     Creates and initializes a logger with specified format, logging messages into
     a specified file and console. If the root logger already has handlers, it removes them to avoid duplicate logs.
-    
+
     Parameters
     ----------
     filename : str, optional
@@ -27,12 +29,14 @@ def init_logger(filename='app.log'):
 
     # Create a file handler
     file_handler = logging.FileHandler(filename)
-    format = logging.Formatter('%(asctime)s : %(levelname)s : %(filename)s - %(message)s')
+    format = logging.Formatter(
+        "%(asctime)s : %(levelname)s : %(filename)s - %(message)s"
+    )
     file_handler.setFormatter(format)
 
     # Make sure root_logger has not been set up before
     if root_logger.hasHandlers():
-           root_logger.handlers.clear()
+        root_logger.handlers.clear()
 
     root_logger.addHandler(file_handler)
 
