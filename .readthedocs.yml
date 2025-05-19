@@ -22,5 +22,6 @@ sphinx:
 # Python requirements
 python:
   install:
+    - requirements: .rtd-requirements.txt
     - method: pip
       path: .[dev]
