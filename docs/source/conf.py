@@ -2,6 +2,9 @@ import sys
 import os
 sys.path.append(os.path.abspath('..'))
 
+# Import version from package
+from wpt_tools import __version__
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -13,7 +16,7 @@ sys.path.append(os.path.abspath('..'))
 project = 'wpt_tools'
 copyright = '2024, t-sasatani'
 author = 't-sasatani'
-release = '0.1.1'
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

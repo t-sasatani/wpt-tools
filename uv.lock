@@ -1424,7 +1424,6 @@ wheels = [
 
 [[package]]
 name = "wpt-tools"
-version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "colorlog" },
