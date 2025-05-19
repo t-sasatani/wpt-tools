@@ -15,7 +15,7 @@ test:
 	uv run pytest tests/
 
 test-cov:
-	uv run pytest tests/ --cov=labauto --cov-report=html
+	uv run pytest tests/ --cov=wpt_tools --cov-report=html
 
 test-fast:
 	uv run pytest tests/ -x --tb=short
