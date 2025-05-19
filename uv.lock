@@ -7,6 +7,18 @@ resolution-markers = [
 ]
 
 [[package]]
+name = "accessible-pygments"
+version = "0.0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bc/c1/bbac6a50d02774f91572938964c582fff4270eee73ab822a4aeea4d8b11b/accessible_pygments-0.0.5.tar.gz", hash = "sha256:40918d3e6a2b619ad424cb91e556bd3bd8865443d9f22f1dcdf79e33c8046872", size = 1377899 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/3f/95338030883d8c8b91223b4e21744b04d11b161a3ef117295d8241f50ab4/accessible_pygments-0.0.5-py3-none-any.whl", hash = "sha256:88ae3211e68a1d0b011504b2ffc1691feafce124b845bd072ab6f9f66f34d4b7", size = 1395903 },
+]
+
+[[package]]
 name = "alabaster"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -49,6 +61,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7d/6b/d52e42361e1aa00709585ecc30b3f9684b3ab62530771402248b1b1d6240/babel-2.17.0.tar.gz", hash = "sha256:0c54cffb19f690cdcc52a3b50bcbf71e07a808d1c80d549f2459b9d2cf0afb9d", size = 9951852 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/b8/3fe70c75fe32afc4bb507f75563d39bc5642255d1d94f1f23604725780bf/babel-2.17.0-py3-none-any.whl", hash = "sha256:4d0b53093fdfb4b21c92b5213dba5a1b23885afa8383709427046b21c366e5f2", size = 10182537 },
+]
+
+[[package]]
+name = "beautifulsoup4"
+version = "4.13.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "soupsieve" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/e4/0c4c39e18fd76d6a628d4dd8da40543d136ce2d1752bd6eeeab0791f4d6b/beautifulsoup4-4.13.4.tar.gz", hash = "sha256:dbb3c4e1ceae6aefebdaf2423247260cd062430a410e38c66f2baa50a8437195", size = 621067 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/50/cd/30110dc0ffcf3b131156077b90e9f60ed75711223f306da4db08eff8403b/beautifulsoup4-4.13.4-py3-none-any.whl", hash = "sha256:9bbbb14bfde9d79f38b8cd5f8c7c85f4b8f2523190ebed90e950a8dea4cb1c4b", size = 187285 },
 ]
 
 [[package]]
@@ -884,6 +909,25 @@ wheels = [
 ]
 
 [[package]]
+name = "pydata-sphinx-theme"
+version = "0.15.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "accessible-pygments" },
+    { name = "babel" },
+    { name = "beautifulsoup4" },
+    { name = "docutils" },
+    { name = "packaging" },
+    { name = "pygments" },
+    { name = "sphinx" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/67/ea/3ab478cccacc2e8ef69892c42c44ae547bae089f356c4b47caf61730958d/pydata_sphinx_theme-0.15.4.tar.gz", hash = "sha256:7762ec0ac59df3acecf49fd2f889e1b4565dbce8b88b2e29ee06fdd90645a06d", size = 2400673 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e7/d3/c622950d87a2ffd1654208733b5bd1c5645930014abed8f4c0d74863988b/pydata_sphinx_theme-0.15.4-py3-none-any.whl", hash = "sha256:2136ad0e9500d0949f96167e63f3e298620040aea8f9c74621959eda5d4cf8e6", size = 4640157 },
+]
+
+[[package]]
 name = "pygments"
 version = "2.19.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1138,6 +1182,15 @@ wheels = [
 ]
 
 [[package]]
+name = "soupsieve"
+version = "2.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/f4/4a80cd6ef364b2e8b65b15816a843c0980f7a5a2b4dc701fc574952aa19f/soupsieve-2.7.tar.gz", hash = "sha256:ad282f9b6926286d2ead4750552c8a6142bc4c783fd66b0293547c8fe6ae126a", size = 103418 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e7/9c/0e6afc12c269578be5c0c1c9f4b49a8d32770a080260c333ac04cc1c832d/soupsieve-2.7-py3-none-any.whl", hash = "sha256:6e60cc5c1ffaf1cebcc12e8188320b72071e922c2e897f737cadce79ad5d30c4", size = 36677 },
+]
+
+[[package]]
 name = "sphinx"
 version = "8.2.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1166,15 +1219,16 @@ wheels = [
 ]
 
 [[package]]
-name = "sphinx-press-theme"
-version = "0.9.1"
+name = "sphinx-book-theme"
+version = "1.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "pydata-sphinx-theme" },
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e7/25/8769ef130d57ea449309a4ee2d76eed653063b5de27d34100822e34e7e93/sphinx_press_theme-0.9.1.tar.gz", hash = "sha256:1643dee7365f7831d1d3971b389b7c255641a7aced75f0681f71574e380046cf", size = 254696 }
+sdist = { url = "https://files.pythonhosted.org/packages/45/19/d002ed96bdc7738c15847c730e1e88282d738263deac705d5713b4d8fa94/sphinx_book_theme-1.1.4.tar.gz", hash = "sha256:73efe28af871d0a89bd05856d300e61edce0d5b2fbb7984e84454be0fedfe9ed", size = 439188 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/28/fbd928e5dcde4f8acdc7b2b730685dafb35d83437cc0b955332349e12b89/sphinx_press_theme-0.9.1-py3-none-any.whl", hash = "sha256:eed3fdd8df249b67136b507dfc6a84d1a2c5feca5376960c6d4d28ada4f6cdf7", size = 83558 },
+    { url = "https://files.pythonhosted.org/packages/51/9e/c41d68be04eef5b6202b468e0f90faf0c469f3a03353f2a218fd78279710/sphinx_book_theme-1.1.4-py3-none-any.whl", hash = "sha256:843b3f5c8684640f4a2d01abd298beb66452d1b2394cd9ef5be5ebd5640ea0e1", size = 433952 },
 ]
 
 [[package]]
@@ -1386,28 +1440,18 @@ dependencies = [
     { name = "toml" },
 ]
 
-[package.optional-dependencies]
-dev = [
-    { name = "ipykernel" },
-    { name = "myst-parser" },
-    { name = "sphinx" },
-    { name = "sphinx-press-theme" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "ipykernel" },
     { name = "myst-parser" },
     { name = "sphinx" },
-    { name = "sphinx-press-theme" },
+    { name = "sphinx-book-theme" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "colorlog", specifier = ">=6.8.2,<7" },
-    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.26.0,<7" },
     { name = "matplotlib", specifier = ">=3.10.3,<4" },
-    { name = "myst-parser", marker = "extra == 'dev'", specifier = ">=4.0.1,<5" },
     { name = "numpy", specifier = ">=1.26.0" },
     { name = "pillow", specifier = ">=11.2.1,<12" },
     { name = "pydantic", specifier = ">=2.11.4,<3" },
@@ -1416,16 +1460,13 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.2.1,<2" },
     { name = "scikit-rf", specifier = ">=1.7.0,<1.8" },
     { name = "scipy", specifier = "~=1.15.3" },
-    { name = "sphinx", marker = "extra == 'dev'", specifier = ">=8.2.3,<8.3" },
-    { name = "sphinx-press-theme", marker = "extra == 'dev'", specifier = ">=0.9.1,<0.10" },
     { name = "toml", specifier = ">=0.10.2,<0.11" },
 ]
-provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "ipykernel", specifier = ">=6.26.0,<7" },
     { name = "myst-parser", specifier = ">=4.0.1,<5" },
     { name = "sphinx", specifier = ">=8.2.3,<8.3" },
-    { name = "sphinx-press-theme", specifier = ">=0.9.1,<0.10" },
+    { name = "sphinx-book-theme", specifier = ">=1.1.4" },
 ]
