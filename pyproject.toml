@@ -18,6 +18,7 @@ dependencies = [
     "colorlog>=6.8.2,<7",
     "pytest>=8.2.2,<9",
     "pytest-cov>=6.1.0,<7",
+    "ipykernel>=6.29.5",
 ]
 
 [project.optional-dependencies]
