@@ -20,6 +20,8 @@ dependencies = [
     "pytest-cov>=6.1.0,<7",
     "ipykernel>=6.29.5",
     "numpydantic>=1.6.11",
+    "dotenv>=0.9.9",
+    "coloredlogs>=15.0.1",
 ]
 
 [project.optional-dependencies]
