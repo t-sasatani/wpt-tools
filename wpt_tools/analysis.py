@@ -843,7 +843,44 @@ class nw_tools:
         target_f: Optional[float] = None,
         range_f: Optional[float] = None,
     ):
-        """Plot efficiency, input power and output power over a grid of complex loads."""
+        """Plot efficiency, input power and output power over a grid of complex loads.
+
+        Optimal load visualization
+        Imura, "Wireless Power Transfer: Using Magnetic and Electric Resonance Coupling Techniques," Springer Singapore 2020.
+
+        Parameters
+        ----------
+        rich_nw: Union[rf.Network, "nw_with_config"]
+            The network to plot.
+        min_rez: float
+            The minimum real(Zload).
+        min_imz: float
+            The minimum imaginary(Zload).
+        max_rez: float
+            The maximum real(Zload).
+        max_imz: float
+            The maximum imaginary(Zload).
+        step_rez: float
+            The step size for the real(Zload).
+        step_imz: float
+            The step size for the imaginary(Zload).
+        input_voltage: float
+            The input voltage.
+        rx_port: int
+            The port to analyze.
+        target_f: Optional[float]
+            The target frequency.
+        range_f: Optional[float]
+            The range of the target frequency.
+
+        Raises
+        ------
+        ValueError
+            If the target frequency is not found within the specified range.
+        TypeError
+            If the network is not a rf.Network or nw_with_config.
+
+        """
         # inline ensure-config
         if isinstance(rich_nw, nw_with_config):
             cfg = rich_nw
@@ -871,8 +908,6 @@ class nw_tools:
         else:
             raise TypeError("nw_or_config must be rf.Network or nw_with_config")
 
-        # Optimal load visualization
-        # Imura, "Wireless Power Transfer: Using Magnetic and Electric Resonance Coupling Techniques," Springer Singapore 2020.
         rez_list = np.arange(min_rez, max_rez, step_rez)
         imz_list = np.arange(min_imz, max_imz, step_imz)
         eff_grid = np.zeros((rez_list.size, imz_list.size))
