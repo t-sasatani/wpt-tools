@@ -1,10 +1,13 @@
+"""Basic import test for wpt_tools."""
+
+import importlib
+
 import pytest
 
+
 def test_import_wpt_tools():
-    """
-    Test that the wpt_tools module can be imported successfully.
-    """
+    """Ensure the package is importable without raising ImportError."""
     try:
-        import wpt_tools
+        importlib.import_module("wpt_tools")
     except ImportError:
         pytest.fail("Failed to import wpt_tools")
