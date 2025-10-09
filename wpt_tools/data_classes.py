@@ -11,6 +11,35 @@ import skrf as rf
 
 
 @dataclasses.dataclass
+class EfficiencyResults:
+    """
+    Results of efficiency solver.
+
+    """
+
+    f_plot: list[float]
+    r_opt: list[float]
+    x_opt: list[float]
+    eff_opt: list[float]
+    max_f_plot: float
+    max_eff_opt: float
+    max_r_opt: float
+    max_x_opt: float
+
+    def __init__(self):
+        """
+        Initialize the results.
+        """
+        self.f_plot = []
+        self.r_opt = []
+        self.x_opt = []
+        self.eff_opt = []
+        self.max_f_plot = None
+        self.max_eff_opt = None
+        self.max_r_opt = None
+        self.max_x_opt = None
+
+@dataclasses.dataclass
 class RichNetwork:
     """
     A dataclass for analyzing wireless power transfer systems.

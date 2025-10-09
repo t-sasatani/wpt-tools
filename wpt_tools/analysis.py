@@ -9,75 +9,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.metrics as metrics
 from scipy.optimize import curve_fit, fmin
+from tabulate import tabulate
 
-from wpt_tools.data_classes import RichNetwork, override_frange
+from wpt_tools.data_classes import RichNetwork, override_frange, EfficiencyResults
+from wpt_tools.solvers import efficiency_calculator
+from wpt_tools.plotter import plot_efficiency
 from wpt_tools.logger import WPTToolsLogger
 
 logger = WPTToolsLogger().get_logger(__name__)
-
-
-def compute_efficiency_vectors(
-    rich_nw: RichNetwork,
-    rx_port: int,
-    target_f: Optional[float],
-    range_f: Optional[float],
-) -> Tuple[
-    list[float], list[float], list[float], list[float], float, float, float, float
-]:
-    """Compute efficiency vectors and maxima (public compute entry point).
-
-    Returns (f_plot, r_opt, x_opt, eff_opt, max_f_plot, max_eff_opt, max_r_opt, max_x_opt).
-    """
-    rich_nw = override_frange(rich_nw, target_f=target_f, range_f=range_f)
-
-    f_plot: list[float] = []
-    r_opt: list[float] = []
-    x_opt: list[float] = []
-    eff_opt: list[float] = []
-
-    max_eff_opt = 0.0
-    max_x_opt = 0.0
-    max_r_opt = 0.0
-    max_f_plot = float(rich_nw.target_f) if rich_nw.target_f is not None else 0.0
-
-    for f_index in range(rich_nw.sweeppoint):
-        if rich_nw.target_f is None:
-            raise ValueError("Target frequency is not set.")
-        if rich_nw.range_f is None:
-            raise ValueError("Range frequency is not set.")
-        if (
-            abs(rich_nw.target_f - rich_nw.nw.frequency.f[f_index])
-            < rich_nw.range_f / 2
-        ):
-            if rx_port == 2:
-                Z11 = rich_nw.nw.z[f_index, 0, 0]
-                Z22 = rich_nw.nw.z[f_index, 1, 1]
-            elif rx_port == 1:
-                Z11 = rich_nw.nw.z[f_index, 1, 1]
-                Z22 = rich_nw.nw.z[f_index, 0, 0]
-            else:
-                raise ValueError("set rx_port to 1 or 2.")
-            Zm = rich_nw.nw.z[f_index, 0, 1]
-            f_temp = rich_nw.nw.frequency.f[f_index]
-            r_det_temp = Z11.real * Z22.real - Zm.real**2
-
-            kq2_temp = (Zm.real**2 + Zm.imag**2) / r_det_temp
-            r_opt_temp = r_det_temp / Z11.real * np.sqrt(1 + kq2_temp)
-            x_opt_temp = Zm.real * Zm.imag - Z11.real * Z22.imag / Z11.real
-            eff_opt_temp = kq2_temp / (1 + np.sqrt(1 + kq2_temp)) ** 2
-
-            f_plot.append(float(f_temp))
-            r_opt.append(float(r_opt_temp))
-            x_opt.append(float(x_opt_temp))
-            eff_opt.append(float(eff_opt_temp))
-
-            if max_eff_opt < eff_opt_temp:
-                max_f_plot = float(f_temp)
-                max_eff_opt = float(eff_opt_temp)
-                max_r_opt = float(r_opt_temp)
-                max_x_opt = float(x_opt_temp)
-
-    return f_plot, r_opt, x_opt, eff_opt, max_f_plot, max_eff_opt, max_r_opt, max_x_opt
 
 
 class nw_tools:
@@ -93,7 +32,7 @@ class nw_tools:
         show_data: bool = True,
         target_f: Optional[float] = None,
         range_f: Optional[float] = None,
-    ) -> Tuple[float, float, float, float]:
+    ) -> EfficiencyResults:
         """
         Analyze the efficiency of the network.
 
@@ -114,14 +53,8 @@ class nw_tools:
 
         Returns
         -------
-        max_f_plot: float
-            The target frequency.
-        max_eff_opt: float
-            The maximum efficiency.
-        max_r_opt: float
-            The maximum real(Zload).
-        max_x_opt: float
-            The maximum imaginary(Zload).
+        EfficiencyResults
+            The results of the efficiency solver.
 
         Raises
         ------
@@ -131,50 +64,27 @@ class nw_tools:
             If the network is not a rf.Network or nw_with_config.
 
         """
-        (
-            f_plot,
-            r_opt,
-            x_opt,
-            eff_opt,
-            max_f_plot,
-            max_eff_opt,
-            max_r_opt,
-            max_x_opt,
-        ) = compute_efficiency_vectors(
+        results = efficiency_calculator(
             rich_nw, rx_port=rx_port, target_f=target_f, range_f=range_f
         )
 
         if show_plot is True:
-            fig, axs = plt.subplots(1, 3, figsize=(18, 4))
-
-            axs[0].plot(f_plot, eff_opt)
-            axs[0].set_title("Maximum efficiency")
-            axs[0].set_xlabel("Frequency")
-            axs[0].set_ylabel("Efficiency")
-            axs[0].axvline(rich_nw.target_f, color="gray", lw=1)
-
-            axs[1].plot(f_plot, r_opt)
-            axs[1].set_title("Optimum Re(Zload)")
-            axs[1].set_xlabel("Frequency")
-            axs[1].set_ylabel("Optimum Re(Zload) (Ohm)")
-            axs[1].axvline(rich_nw.target_f, color="gray", lw=1)
-
-            axs[2].plot(f_plot, x_opt)
-            axs[2].set_title("Optimum Im(Zload)")
-            axs[2].set_xlabel("Frequency")
-            axs[2].set_ylabel("Optimum Im(Zload) (Ohm)")
-            axs[2].axvline(rich_nw.target_f, color="gray", lw=1)
-
-            fig.tight_layout()
+            plot_efficiency(results, rich_nw)
 
         if show_data is True:
-            print("----Analysis results----")
-            print("Target frequency: %.3e" % (max_f_plot))
-            print("Maximum efficiency: %.2f" % (max_eff_opt))
-            print("Optimum Re(Zload): %.2f" % (max_r_opt))
-            print("Optimum Im(Zload): %.2f" % (max_x_opt))
+            print(tabulate([
+                ["Target frequency", results.max_f_plot],
+                ["Maximum efficiency", results.max_eff_opt],
+                ["Optimum Re(Zload)", results.max_r_opt],
+                ["Optimum Im(Zload)", results.max_x_opt]],
+                headers=["Parameter", "Value"],
+                stralign='left',
+                numalign='right',
+                floatfmt='.3e',
+                tablefmt='fancy_grid',
+                ))
 
-        return max_f_plot, max_eff_opt, max_r_opt, max_x_opt
+        return results
 
     @staticmethod
     def plot_z_full(
