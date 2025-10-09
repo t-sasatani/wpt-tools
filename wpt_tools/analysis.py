@@ -142,7 +142,7 @@ class nw_tools:
         target_f: Optional[float]
             The target frequency.
         range_f: Optional[float]
-            The range of the target frequency.
+            The range of the target frequency!
 
         Returns
         -------
