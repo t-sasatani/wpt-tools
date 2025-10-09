@@ -29,7 +29,7 @@ class WPTToolsLogger:
         log_dir="log",
     ):
         """
-        Construct the LoRaDAQLogger class.
+        Construct the WPTToolsLogger class.
 
         Parameters
         ----------
