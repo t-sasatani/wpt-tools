@@ -67,7 +67,19 @@ class EfficiencyResults:
 
     def print_table(self) -> None:
         """Print a summary table of peak efficiency and optimal load."""
+        self.validate()
         print("Efficiency summary\n")
+
+    def validate(self) -> None:
+        """Validate required fields for printing/plotting."""
+        if self.max_f_plot is None:
+            raise ValueError("EfficiencyResults.max_f_plot is None")
+        if self.max_eff_opt is None:
+            raise ValueError("EfficiencyResults.max_eff_opt is None")
+        if self.max_r_opt is None:
+            raise ValueError("EfficiencyResults.max_r_opt is None")
+        if self.max_x_opt is None:
+            raise ValueError("EfficiencyResults.max_x_opt is None")
         print(
             tabulate(
                 [
@@ -135,6 +147,7 @@ class LCRFittingResults:
 
     def print_tables(self) -> None:
         """Print port-1, port-2 (if present), and mutual tables separately."""
+        self.validate()
         target_f = self._target_f
         nports = (
             self._nports
@@ -142,10 +155,10 @@ class LCRFittingResults:
             else (2 if hasattr(self, "ls2") and isinstance(self.ls2, ValR2) else 1)
         )
         # Port 1 table
-        print("LCR fit: Port 1\n")
         print(
             tabulate(
                 [
+                    ["Fitting params (port 1)", "", ""],
                     ["Ls1", self.ls1.value, f"{self.ls1.r2:.3e}"],
                     ["Cs1", self.cs1.value, f"{self.cs1.r2:.3e}"],
                     ["Rs1", self.rs1.value, f"{self.rs1.r2:.3e}"],
@@ -177,10 +190,10 @@ class LCRFittingResults:
         )
         # Port 2 table
         if nports == 2:
-            print("LCR fit: Port 2\n")
             print(
                 tabulate(
                     [
+                        ["Fitting params (port 2)", "", ""],
                         ["Ls2", self.ls2.value, f"{self.ls2.r2:.3e}"],
                         ["Cs2", self.cs2.value, f"{self.cs2.r2:.3e}"],
                         ["Rs2", self.rs2.value, f"{self.rs2.r2:.3e}"],
@@ -210,17 +223,19 @@ class LCRFittingResults:
                     tablefmt="fancy_grid",
                 )
             )
-            # Mutual table
-            print("LCR fit: Mutual\n")
+        # Mutual table (print if fitted)
+        if isinstance(self.lm, ValR2) and self.lm.value is not None:
+            ls_for_km = (
+                self.ls2.value
+                if (isinstance(self.ls2, ValR2) and self.ls2.value is not None)
+                else self.ls1.value
+            )
             print(
                 tabulate(
                     [
+                        ["Fitting params (mutual)", "", ""],
                         ["Lm", self.lm.value, f"{self.lm.r2:.3e}"],
-                        [
-                            "km",
-                            self.lm.value / np.sqrt(self.ls1.value * self.ls2.value),
-                            "",
-                        ],
+                        ["km", self.lm.value / np.sqrt(self.ls1.value * ls_for_km), ""],
                     ],
                     headers=["Parameter", "Value", "R2"],
                     stralign="left",
@@ -229,6 +244,15 @@ class LCRFittingResults:
                     tablefmt="fancy_grid",
                 )
             )
+
+    def validate(self) -> None:
+        """Validate required fitted values exist before printing/plotting."""
+        if not isinstance(self.ls1, ValR2) or self.ls1.value is None:
+            raise ValueError("LCRFittingResults.ls1 missing")
+        if not isinstance(self.cs1, ValR2) or self.cs1.value is None:
+            raise ValueError("LCRFittingResults.cs1 missing")
+        if not isinstance(self.rs1, ValR2) or self.rs1.value is None:
+            raise ValueError("LCRFittingResults.rs1 missing")
 
 
 @dataclasses.dataclass
@@ -263,7 +287,15 @@ class OptimalLoadGridResults:
 
     def print_table(self) -> None:
         """Print sweep metadata (dimensions and target freq)."""
+        self.validate()
         print("Load sweep metadata\n")
+
+    def validate(self) -> None:
+        """Validate required arrays for plotting/printing."""
+        if self.rez_list is None or self.imz_list is None:
+            raise ValueError("Load sweep axes missing")
+        if self.eff_grid is None or self.Pin is None or self.Pout is None:
+            raise ValueError("Load sweep grids missing")
         print(
             tabulate(
                 [
@@ -296,7 +328,22 @@ class RXCFilterResults:
 
     def print_table(self) -> None:
         """Print RXC filter summary values."""
+        self.validate()
         print("RXC filter summary\n")
+
+    def validate(self) -> None:
+        """Validate RXC filter fields before printing/plotting."""
+        for name in (
+            "cp",
+            "cs",
+            "rload",
+            "max_r_opt",
+            "max_x_opt",
+            "max_f_plot",
+            "lrx",
+        ):
+            if getattr(self, name, None) is None:
+                raise ValueError(f"RXCFilterResults.{name} is None")
         print(
             tabulate(
                 [

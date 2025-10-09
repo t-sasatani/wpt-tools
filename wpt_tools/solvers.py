@@ -367,4 +367,9 @@ def lcr_fitting(
             logger.warning(f"R2 for fitting Lm is {r2}")
         results.lm = ValR2(value=lm_value, r2=r2)
 
+    # Set context for downstream printing/plotting
+    results._target_f = (
+        float(rich_nw.target_f) if rich_nw.target_f is not None else None
+    )
+    results._nports = int(getattr(rich_nw.nw, "nports", 1))
     return results

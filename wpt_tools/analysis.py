@@ -58,7 +58,7 @@ class nw_tools:
     def analyze_efficiency(
         rich_nw: RichNetwork,
         rx_port: int = 2,
-        show_plot: bool = True,
+        show_plot: bool = False,
         show_data: bool = True,
         target_f: Optional[float] = None,
         range_f: Optional[float] = None,
@@ -123,7 +123,7 @@ class nw_tools:
     @staticmethod
     def fit_z_narrow(
         rich_nw: RichNetwork,
-        show_plot: bool = True,
+        show_plot: bool = False,
         show_data: bool = True,
         target_f: Optional[float] = None,
         range_f: Optional[float] = None,
@@ -219,7 +219,7 @@ class nw_tools:
         input_voltage: Optional[float] = 1,
         target_f: Optional[float] = None,
         range_f: Optional[float] = None,
-        show_plot: bool = True,
+        show_plot: bool = False,
     ):
         """Compute load sweep results and optionally plot them. Returns results."""
         results = compute_load_sweep(

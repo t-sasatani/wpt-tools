@@ -73,7 +73,7 @@ def plot_efficiency(results: EfficiencyResults, rich_nw: RichNetwork):
     if not get_ipython():
         plt.show()
 
-    return None
+    return fig, axs
 
 
 def plot_impedance(
@@ -82,7 +82,7 @@ def plot_impedance(
     *,
     full_range: bool = False,
     target_f: Optional[float] = None,
-) -> None:
+) -> tuple:
     """
     Unified impedance plotter.
 
@@ -169,7 +169,7 @@ def plot_impedance(
         fig.tight_layout()
         if not get_ipython():
             plt.show()
-        return None
+        return (fig, axs)
 
     # Two-port plotting
     fig, axs = plt.subplots(1, 4, figsize=(18, 3.5))
@@ -278,7 +278,7 @@ def plot_impedance(
     fig.tight_layout()
     if not get_ipython():
         plt.show()
-    return None
+    return (fig, axs)
 
 
 def plot_load_sweep(results: OptimalLoadGridResults):
@@ -332,4 +332,4 @@ def plot_load_sweep(results: OptimalLoadGridResults):
     fig.tight_layout()
     if not get_ipython():
         plt.show()
-    return None
+    return fig, axs
