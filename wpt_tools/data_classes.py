@@ -9,6 +9,7 @@ from typing import Optional, Union
 import numpy as np
 import skrf as rf
 
+
 @dataclasses.dataclass
 class ValR2:
     """
@@ -32,6 +33,7 @@ class ValR2:
         """
         self.value = value
         self.r2 = r2
+
 
 @dataclasses.dataclass
 class EfficiencyResults:
@@ -61,6 +63,7 @@ class EfficiencyResults:
         self.max_eff_opt = None
         self.max_r_opt = None
         self.max_x_opt = None
+
 
 class LCRFittingResults:
     """
@@ -106,6 +109,7 @@ class LCRFittingResults:
         self.cs2 = ValR2
         self.rs2 = ValR2
         self.lm = ValR2
+
 
 @dataclasses.dataclass
 class RichNetwork:

@@ -2,20 +2,26 @@
 Analysis code for wireless power transfer systems.
 """
 
-from typing import Optional, Literal
+from dataclasses import dataclass
+from typing import Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fmin
-from dataclasses import dataclass
 from tabulate import tabulate
 
-from wpt_tools.data_classes import RichNetwork, override_frange, EfficiencyResults, LCRFittingResults
-from wpt_tools.solvers import efficiency_calculator, lcr_fitting
-from wpt_tools.plotter import plot_efficiency, plot_impedance
+from wpt_tools.data_classes import (
+    EfficiencyResults,
+    LCRFittingResults,
+    RichNetwork,
+    override_frange,
+)
 from wpt_tools.logger import WPTToolsLogger
+from wpt_tools.plotter import plot_efficiency, plot_impedance
+from wpt_tools.solvers import efficiency_calculator, lcr_fitting
 
 logger = WPTToolsLogger().get_logger(__name__)
+
 
 @dataclass
 class MinMax:
@@ -44,6 +50,7 @@ class MinMax:
         self.min = min
         self.max = max
         self.step = step
+
 
 class nw_tools:
     """
@@ -98,46 +105,23 @@ class nw_tools:
             plot_efficiency(results, rich_nw)
 
         if show_data is True:
-            print(tabulate([
-                ["Target frequency", results.max_f_plot],
-                ["Maximum efficiency", results.max_eff_opt],
-                ["Optimum Re(Zload)", results.max_r_opt],
-                ["Optimum Im(Zload)", results.max_x_opt]],
-                headers=["Parameter", "Value"],
-                stralign='left',
-                numalign='right',
-                floatfmt='.3e',
-                tablefmt='fancy_grid',
-                ))
+            print(
+                tabulate(
+                    [
+                        ["Target frequency", results.max_f_plot],
+                        ["Maximum efficiency", results.max_eff_opt],
+                        ["Optimum Re(Zload)", results.max_r_opt],
+                        ["Optimum Im(Zload)", results.max_x_opt],
+                    ],
+                    headers=["Parameter", "Value"],
+                    stralign="left",
+                    numalign="right",
+                    floatfmt=".3e",
+                    tablefmt="fancy_grid",
+                )
+            )
 
         return results
-
-    @staticmethod
-    def plot_z_full(
-        rich_nw: RichNetwork,
-        target_f: Optional[float] = None,
-    ) -> None:
-        """
-        Plot the full impedance matrix of the network.
-
-        Parameters
-        ----------
-        rich_nw: RichNetwork
-            The network to plot.
-        target_f: Optional[float]
-            The target frequency.
-
-        Raises
-        ------
-        ValueError
-            If the target frequency is not found within the specified range.
-        TypeError
-            If the network is not a rf.Network or nw_with_config.
-
-        """
-        plot_impedance(rich_nw, results=None, full_range=True, target_f=target_f)
-
-        return None
 
     @staticmethod
     def fit_z_narrow(
@@ -175,35 +159,100 @@ class nw_tools:
 
             print("Fitting values assuming a pair of series LCR resonators\n")
             print(
-                tabulate([
-                    ["Ls1", results.ls1.value, f"{results.ls1.r2:.3e}"],
-                    ["Cs1", results.cs1.value, f"{results.cs1.r2:.3e}"],
-                    ["Rs1", results.rs1.value, f"{results.rs1.r2:.3e}"],
-                    ["f_1", 1 / (2 * np.pi * np.sqrt(results.ls1.value * results.cs1.value)), ""],
-                    [f"Q_1 (approx., @{rich_nw.target_f:.3e} Hz)", (2 * np.pi * float(rich_nw.target_f) * results.ls1.value / results.rs1.value), ""]
-                ], headers=["Parameter", "Value", "R2"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
+                tabulate(
+                    [
+                        ["Ls1", results.ls1.value, f"{results.ls1.r2:.3e}"],
+                        ["Cs1", results.cs1.value, f"{results.cs1.r2:.3e}"],
+                        ["Rs1", results.rs1.value, f"{results.rs1.r2:.3e}"],
+                        [
+                            "f_1",
+                            1
+                            / (
+                                2
+                                * np.pi
+                                * np.sqrt(results.ls1.value * results.cs1.value)
+                            ),
+                            "",
+                        ],
+                        [
+                            f"Q_1 (approx., @{rich_nw.target_f:.3e} Hz)",
+                            (
+                                2
+                                * np.pi
+                                * float(rich_nw.target_f)
+                                * results.ls1.value
+                                / results.rs1.value
+                            ),
+                            "",
+                        ],
+                    ],
+                    headers=["Parameter", "Value", "R2"],
+                    stralign="left",
+                    numalign="right",
+                    floatfmt=".3e",
+                    tablefmt="fancy_grid",
+                )
             )
             if rich_nw.nw.nports == 2:
                 print(
-                    tabulate([
-                        ["Ls2", results.ls2.value, f"{results.ls2.r2:.3e}"],
-                        ["Cs2", results.cs2.value, f"{results.cs2.r2:.3e}"],
-                        ["Rs2", results.rs2.value, f"{results.rs2.r2:.3e}"],
-                        ["f_2", 1 / (2 * np.pi * np.sqrt(results.ls2.value * results.cs2.value)), ""],
-                        [f"Q_2 (approx., @{rich_nw.target_f:.3e} Hz)", (2 * np.pi * float(rich_nw.target_f) * results.ls2.value / results.rs2.value), ""]
-                    ], headers=["Parameter", "Value", "R2"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
+                    tabulate(
+                        [
+                            ["Ls2", results.ls2.value, f"{results.ls2.r2:.3e}"],
+                            ["Cs2", results.cs2.value, f"{results.cs2.r2:.3e}"],
+                            ["Rs2", results.rs2.value, f"{results.rs2.r2:.3e}"],
+                            [
+                                "f_2",
+                                1
+                                / (
+                                    2
+                                    * np.pi
+                                    * np.sqrt(results.ls2.value * results.cs2.value)
+                                ),
+                                "",
+                            ],
+                            [
+                                f"Q_2 (approx., @{rich_nw.target_f:.3e} Hz)",
+                                (
+                                    2
+                                    * np.pi
+                                    * float(rich_nw.target_f)
+                                    * results.ls2.value
+                                    / results.rs2.value
+                                ),
+                                "",
+                            ],
+                        ],
+                        headers=["Parameter", "Value", "R2"],
+                        stralign="left",
+                        numalign="right",
+                        floatfmt=".3e",
+                        tablefmt="fancy_grid",
+                    )
                 )
                 print(
-                    tabulate([
-                        ["Lm", results.lm.value, f"{results.lm.r2:.3e}"],
-                        ["km", results.lm.value / np.sqrt(results.ls1.value * results.ls2.value), ""]
-                    ], headers=["Parameter", "Value", "R2"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
+                    tabulate(
+                        [
+                            ["Lm", results.lm.value, f"{results.lm.r2:.3e}"],
+                            [
+                                "km",
+                                results.lm.value
+                                / np.sqrt(results.ls1.value * results.ls2.value),
+                                "",
+                            ],
+                        ],
+                        headers=["Parameter", "Value", "R2"],
+                        stralign="left",
+                        numalign="right",
+                        floatfmt=".3e",
+                        tablefmt="fancy_grid",
+                    )
                 )
 
         if show_plot is True:
             # Plot within the narrow range by default; overlay fits when available
-            plot_impedance(rich_nw, results=results, full_range=False, target_f=target_f)
-
+            plot_impedance(
+                rich_nw, results=results, full_range=False, target_f=target_f
+            )
 
         return results
 
@@ -220,9 +269,7 @@ class nw_tools:
         """Compute receiver capacitor values for a target load at the optimal point."""
         rich_nw = override_frange(rich_nw, target_f=target_f, range_f=range_f)
 
-        results = nw_tools.fit_z_narrow(
-            rich_nw, show_plot=0, show_data=0
-        )
+        results = nw_tools.fit_z_narrow(rich_nw, show_plot=0, show_data=0)
         max_f_plot, max_eff_opt, max_r_opt, max_x_opt = nw_tools.analyze_efficiency(
             rich_nw, rx_port=rx_port, show_plot=0, show_data=0
         )
@@ -237,13 +284,20 @@ class nw_tools:
 
         print("-----------Analysis results-----------")
         print(
-            tabulate([
-                ["Target frequency", results.max_f_plot],
-                ["Maximum efficiency", max_eff_opt],
-                ["Receiver inductance", lrx],
-                ["Optimum load", max_r_opt],
-                ["Target Rload", rload]
-            ], headers=["Parameter", "Value"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
+            tabulate(
+                [
+                    ["Target frequency", results.max_f_plot],
+                    ["Maximum efficiency", max_eff_opt],
+                    ["Receiver inductance", lrx],
+                    ["Optimum load", max_r_opt],
+                    ["Target Rload", rload],
+                ],
+                headers=["Parameter", "Value"],
+                stralign="left",
+                numalign="right",
+                floatfmt=".3e",
+                tablefmt="fancy_grid",
+            )
         )
 
         if c_network == "CpCsRl":

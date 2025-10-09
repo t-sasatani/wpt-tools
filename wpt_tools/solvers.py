@@ -5,9 +5,16 @@ Solvers for wpt-tools.
 from typing import Literal, Optional
 
 import numpy as np
-from wpt_tools.data_classes import RichNetwork, override_frange, EfficiencyResults, LCRFittingResults, ValR2
-from scipy.optimize import curve_fit
 import sklearn.metrics as metrics
+from scipy.optimize import curve_fit
+
+from wpt_tools.data_classes import (
+    EfficiencyResults,
+    LCRFittingResults,
+    RichNetwork,
+    ValR2,
+    override_frange,
+)
 from wpt_tools.logger import WPTToolsLogger
 
 logger = WPTToolsLogger().get_logger(__name__)
@@ -19,17 +26,20 @@ def series_lcr_xself(x, ls, cs):
     """
     return 2 * np.pi * x * ls - 1 / (2 * np.pi * x * cs)
 
+
 def series_lcr_rself(x, r):
     """
     Series LCR model for self resistance.
     """
     return 0 * x + r
 
+
 def series_lcr_xm(x, lm):
     """
     Series LCR model for mutual reactance.
     """
     return 2 * np.pi * x * lm
+
 
 def efficiency_calculator(
     rich_nw: RichNetwork,
@@ -99,7 +109,12 @@ def efficiency_calculator(
 
     return results
 
-def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f: Optional[float] = None) -> LCRFittingResults:
+
+def lcr_fitting(
+    rich_nw: RichNetwork,
+    target_f: Optional[float] = None,
+    range_f: Optional[float] = None,
+) -> LCRFittingResults:
     """
     Fit the LCR model to the network.
     """
@@ -223,6 +238,5 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
         )
         logger.info("R2 for fitting Lm: %f" % (r2))
         results.lm = ValR2(value=lm_value, r2=r2)
-
 
     return results

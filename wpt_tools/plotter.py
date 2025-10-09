@@ -2,14 +2,17 @@
 Plotting functions for wpt-tools.
 """
 
-from wpt_tools.logger import WPTToolsLogger
-import matplotlib.pyplot as plt
-from wpt_tools.data_classes import RichNetwork, EfficiencyResults, LCRFittingResults
-from IPython import get_ipython
 from typing import Optional
-from wpt_tools.solvers import series_lcr_xself, series_lcr_xm
+
+import matplotlib.pyplot as plt
+from IPython import get_ipython
+
+from wpt_tools.data_classes import EfficiencyResults, LCRFittingResults, RichNetwork
+from wpt_tools.logger import WPTToolsLogger
+from wpt_tools.solvers import series_lcr_xm, series_lcr_xself
 
 logger = WPTToolsLogger().get_logger(__name__)
+
 
 def plot_efficiency(results: EfficiencyResults, rich_nw: RichNetwork):
     """
@@ -55,7 +58,6 @@ def plot_efficiency(results: EfficiencyResults, rich_nw: RichNetwork):
         plt.show()
 
     return None
-
 
 
 def plot_impedance(
