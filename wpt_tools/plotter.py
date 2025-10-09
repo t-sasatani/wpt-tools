@@ -393,3 +393,205 @@ def plot_z11(rich_nw: RichNetwork, results: LCRFittingResults, target_f: Optiona
         plt.show()
 
     return None
+
+def plot_impedance(
+    rich_nw: RichNetwork,
+    results: Optional[LCRFittingResults] = None,
+    *,
+    full_range: bool = False,
+    target_f: Optional[float] = None,
+) -> None:
+    """
+    Unified impedance plotter.
+
+    - For 1-port: plots Z11 real/imag. If results provided, overlays fit for imag(Z11).
+    - For 2-port: plots 4 subplots for Z11, Z12, Z21, Z22 real/imag. If results provided, overlays fits for self and mutual reactances.
+    - By default, plots within `rich_nw` narrow range; set `full_range=True` to plot full sweep.
+    """
+    logger.info("Plotting impedance (unified). full_range=%s" % (full_range))
+
+    # Determine frequency slice
+    if full_range:
+        f_vec = rich_nw.nw.frequency.f
+        z_slice = rich_nw.nw.z
+    else:
+        f_vec = rich_nw.nw.frequency.f[
+            rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
+        ]
+        z_slice = rich_nw.nw.z[
+            rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop, :, :
+        ]
+
+    nports = rich_nw.nw.nports
+
+    if nports == 1:
+        fig, axs = plt.subplots(1, 1, figsize=(5, 3.5))
+        twin = axs.twinx()
+
+        lw = 3 if not full_range else 1
+        (pr,) = axs.plot(f_vec, z_slice[:, 0, 0].real, label="real(z)", lw=lw)
+        (pi,) = twin.plot(f_vec, z_slice[:, 0, 0].imag, "r-", label="imag(z)", lw=lw)
+
+        axs.set_title("Z11")
+        axs.set_xlabel("frequency")
+        axs.set_ylabel("re(Z11) Ohm")
+        twin.set_ylabel("im(Z11) Ohm")
+        axs.yaxis.label.set_color(pr.get_color())
+        twin.yaxis.label.set_color(pi.get_color())
+        vline_f = rich_nw.target_f if rich_nw.target_f is not None else target_f
+        if vline_f is not None:
+            axs.axvline(vline_f, color="gray", lw=1)
+        # Set symmetric y-limits consistent with legacy behavior
+        if full_range:
+            axs.set_ylim(
+                (
+                    -abs(z_slice[:, 0, 0].real).max(),
+                    abs(z_slice[:, 0, 0].real).max(),
+                )
+            )
+            twin.set_ylim(
+                (
+                    -abs(z_slice[:, 0, 0].imag).max(),
+                    abs(z_slice[:, 0, 0].imag).max(),
+                )
+            )
+        else:
+            axs.set_ylim(
+                (
+                    -1.5 * abs(z_slice[:, 0, 0].real).max(),
+                    1.5 * abs(z_slice[:, 0, 0].real).max(),
+                )
+            )
+            twin.set_ylim(
+                (
+                    -1.5 * abs(z_slice[:, 0, 0].imag).max(),
+                    1.5 * abs(z_slice[:, 0, 0].imag).max(),
+                )
+            )
+        axs.axhline(0, color="gray", lw=1)
+
+        # Overlay fit if available and not full range (fits are narrowband)
+        if results is not None and not full_range:
+            twin.plot(
+                f_vec,
+                series_lcr_xself(
+                    f_vec,
+                    results.ls1.value,
+                    results.cs1.value,
+                ),
+                label="imag(z) fitting",
+                color="green",
+            )
+
+        fig.tight_layout()
+        if not get_ipython():
+            plt.show()
+        return None
+
+    # Two-port plotting
+    fig, axs = plt.subplots(1, 4, figsize=(18, 3.5))
+    twins = [axs[i].twinx() for i in range(4)]
+
+    for rx_port in range(1, 3):
+        for tx_port in range(1, 3):
+            plot_index = (rx_port - 1) * 2 + (tx_port - 1) * 1
+            axs[plot_index].set_title("Z" + str(rx_port) + str(tx_port))
+            lw = 3 if not full_range else 1
+            (pr,) = axs[plot_index].plot(
+                f_vec,
+                z_slice[:, rx_port - 1, tx_port - 1].real,
+                label="real(z)",
+                lw=lw,
+            )
+            (pi,) = twins[plot_index].plot(
+                f_vec,
+                z_slice[:, rx_port - 1, tx_port - 1].imag,
+                "r-",
+                label="imag(z)",
+                lw=lw,
+            )
+            axs[plot_index].set_xlabel("frequency")
+            axs[plot_index].set_ylabel("re(Z%s%s) Ohm" % (rx_port, tx_port))
+            twins[plot_index].set_ylabel("im(Z%s%s) Ohm" % (rx_port, tx_port))
+            axs[plot_index].yaxis.label.set_color(pr.get_color())
+            twins[plot_index].yaxis.label.set_color(pi.get_color())
+            vline_f = rich_nw.target_f if rich_nw.target_f is not None else target_f
+            if vline_f is not None:
+                axs[plot_index].axvline(vline_f, color="gray", lw=1)
+            # Set symmetric y-limits consistent with legacy behavior
+            if full_range:
+                axs[plot_index].set_ylim(
+                    (
+                        -abs(z_slice[:, rx_port - 1, tx_port - 1].real).max(),
+                        abs(z_slice[:, rx_port - 1, tx_port - 1].real).max(),
+                    )
+                )
+                twins[plot_index].set_ylim(
+                    (
+                        -abs(z_slice[:, rx_port - 1, tx_port - 1].imag).max(),
+                        abs(z_slice[:, rx_port - 1, tx_port - 1].imag).max(),
+                    )
+                )
+            else:
+                axs[plot_index].set_ylim(
+                    (
+                        -1.5 * abs(z_slice[:, rx_port - 1, tx_port - 1].real).max(),
+                        1.5 * abs(z_slice[:, rx_port - 1, tx_port - 1].real).max(),
+                    )
+                )
+                twins[plot_index].set_ylim(
+                    (
+                        -1.5 * abs(z_slice[:, rx_port - 1, tx_port - 1].imag).max(),
+                        1.5 * abs(z_slice[:, rx_port - 1, tx_port - 1].imag).max(),
+                    )
+                )
+            axs[plot_index].axhline(0, color="gray", lw=1)
+
+    # Overlay fits when provided and plotting narrow range
+    if results is not None and not full_range:
+        # Z11 fit on subplot 0
+        twins[0].plot(
+            f_vec,
+            series_lcr_xself(
+                f_vec,
+                results.ls1.value,
+                results.cs1.value,
+            ),
+            label="imag(z) fitting",
+            color="green",
+        )
+        # Z22 fit on subplot 3
+        twins[3].plot(
+            f_vec,
+            series_lcr_xself(
+                f_vec,
+                results.ls2.value,
+                results.cs2.value,
+            ),
+            label="imag(z) fitting",
+            color="green",
+        )
+        # Mutual Z12 and Z21 use series_lcr_xm
+        twins[1].plot(
+            f_vec,
+            series_lcr_xm(
+                f_vec,
+                results.lm.value,
+            ),
+            label="imag(z) fitting",
+            color="green",
+        )
+        twins[2].plot(
+            f_vec,
+            series_lcr_xm(
+                f_vec,
+                results.lm.value,
+            ),
+            label="imag(z) fitting",
+            color="green",
+        )
+
+    fig.tight_layout()
+    if not get_ipython():
+        plt.show()
+    return None

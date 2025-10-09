@@ -12,7 +12,7 @@ from tabulate import tabulate
 
 from wpt_tools.data_classes import RichNetwork, override_frange, EfficiencyResults, LCRFittingResults
 from wpt_tools.solvers import efficiency_calculator, lcr_fitting
-from wpt_tools.plotter import plot_efficiency, plot_z_matrix, plot_z_matrix_narrow, plot_z11
+from wpt_tools.plotter import plot_efficiency, plot_impedance
 from wpt_tools.logger import WPTToolsLogger
 
 logger = WPTToolsLogger().get_logger(__name__)
@@ -135,7 +135,7 @@ class nw_tools:
             If the network is not a rf.Network or nw_with_config.
 
         """
-        plot_z_matrix(rich_nw, target_f)
+        plot_impedance(rich_nw, results=None, full_range=True, target_f=target_f)
 
         return None
 
@@ -196,15 +196,13 @@ class nw_tools:
                 print(
                     tabulate([
                         ["Lm", results.lm.value, f"{results.lm.r2:.3e}"],
-                        ["km", results.lm.value / np.sqrt(results.ls1.value * results.ls2.value)]
+                        ["km", results.lm.value / np.sqrt(results.ls1.value * results.ls2.value), ""]
                     ], headers=["Parameter", "Value", "R2"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
                 )
 
         if show_plot is True:
-            if rich_nw.nw.nports == 1:
-                plot_z11(rich_nw, results, target_f)
-            if rich_nw.nw.nports == 2:
-                plot_z_matrix_narrow(rich_nw, results, target_f)
+            # Plot within the narrow range by default; overlay fits when available
+            plot_impedance(rich_nw, results=results, full_range=False, target_f=target_f)
 
 
         return results
