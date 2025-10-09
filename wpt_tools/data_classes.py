@@ -65,6 +65,25 @@ class EfficiencyResults:
         self.max_r_opt = None
         self.max_x_opt = None
 
+    def print_table(self) -> None:
+        """Print a summary table of peak efficiency and optimal load."""
+        print("Efficiency summary\n")
+        print(
+            tabulate(
+                [
+                    ["Target frequency", self.max_f_plot],
+                    ["Maximum efficiency", self.max_eff_opt],
+                    ["Optimum Re(Zload)", self.max_r_opt],
+                    ["Optimum Im(Zload)", self.max_x_opt],
+                ],
+                headers=["Parameter", "Value"],
+                stralign="left",
+                numalign="right",
+                floatfmt=".3e",
+                tablefmt="fancy_grid",
+            )
+        )
+
 
 class LCRFittingResults:
     """
@@ -115,61 +134,40 @@ class LCRFittingResults:
         self._nports: Optional[int] = None
 
     def print_tables(self) -> None:
-        """
-        Print a single combined LCR fit results table with R2 and derived values.
-        """
+        """Print port-1, port-2 (if present), and mutual tables separately."""
         target_f = self._target_f
         nports = (
             self._nports
             if self._nports is not None
             else (2 if hasattr(self, "ls2") and isinstance(self.ls2, ValR2) else 1)
         )
-        rows: list[list[object]] = []
-        # Port 1 rows
-        rows.append(["Ls1", self.ls1.value, f"{self.ls1.r2:.3e}"])
-        rows.append(["Cs1", self.cs1.value, f"{self.cs1.r2:.3e}"])
-        rows.append(["Rs1", self.rs1.value, f"{self.rs1.r2:.3e}"])
-        rows.append(
-            ["f_1", 1 / (2 * np.pi * np.sqrt(self.ls1.value * self.cs1.value)), ""]
-        )
-        rows.append(
-            (
-                [
-                    f"Q_1 (approx., @{target_f:.3e} Hz)",
-                    2 * np.pi * float(target_f) * self.ls1.value / self.rs1.value,
-                    "",
-                ]
-                if target_f is not None
-                else ["Q_1 (approx.)", "", ""]
-            )
-        )
-        # Port 2 rows if available
-        if nports == 2:
-            rows.append(["Ls2", self.ls2.value, f"{self.ls2.r2:.3e}"])
-            rows.append(["Cs2", self.cs2.value, f"{self.cs2.r2:.3e}"])
-            rows.append(["Rs2", self.rs2.value, f"{self.rs2.r2:.3e}"])
-            rows.append(
-                ["f_2", 1 / (2 * np.pi * np.sqrt(self.ls2.value * self.cs2.value)), ""]
-            )
-            rows.append(
-                (
-                    [
-                        f"Q_2 (approx., @{target_f:.3e} Hz)",
-                        2 * np.pi * float(target_f) * self.ls2.value / self.rs2.value,
-                        "",
-                    ]
-                    if target_f is not None
-                    else ["Q_2 (approx.)", "", ""]
-                )
-            )
-            rows.append(["Lm", self.lm.value, f"{self.lm.r2:.3e}"])
-            rows.append(
-                ["km", self.lm.value / np.sqrt(self.ls1.value * self.ls2.value), ""]
-            )
-
+        # Port 1 table
+        print("LCR fit: Port 1\n")
         print(
             tabulate(
-                rows,
+                [
+                    ["Ls1", self.ls1.value, f"{self.ls1.r2:.3e}"],
+                    ["Cs1", self.cs1.value, f"{self.cs1.r2:.3e}"],
+                    ["Rs1", self.rs1.value, f"{self.rs1.r2:.3e}"],
+                    [
+                        "f_1",
+                        1 / (2 * np.pi * np.sqrt(self.ls1.value * self.cs1.value)),
+                        "",
+                    ],
+                    (
+                        [
+                            f"Q_1 (approx., @{target_f:.3e} Hz)",
+                            2
+                            * np.pi
+                            * float(target_f)
+                            * self.ls1.value
+                            / self.rs1.value,
+                            "",
+                        ]
+                        if target_f is not None
+                        else ["Q_1 (approx.)", "", ""]
+                    ),
+                ],
                 headers=["Parameter", "Value", "R2"],
                 stralign="left",
                 numalign="right",
@@ -177,6 +175,60 @@ class LCRFittingResults:
                 tablefmt="fancy_grid",
             )
         )
+        # Port 2 table
+        if nports == 2:
+            print("LCR fit: Port 2\n")
+            print(
+                tabulate(
+                    [
+                        ["Ls2", self.ls2.value, f"{self.ls2.r2:.3e}"],
+                        ["Cs2", self.cs2.value, f"{self.cs2.r2:.3e}"],
+                        ["Rs2", self.rs2.value, f"{self.rs2.r2:.3e}"],
+                        [
+                            "f_2",
+                            1 / (2 * np.pi * np.sqrt(self.ls2.value * self.cs2.value)),
+                            "",
+                        ],
+                        (
+                            [
+                                f"Q_2 (approx., @{target_f:.3e} Hz)",
+                                2
+                                * np.pi
+                                * float(target_f)
+                                * self.ls2.value
+                                / self.rs2.value,
+                                "",
+                            ]
+                            if target_f is not None
+                            else ["Q_2 (approx.)", "", ""]
+                        ),
+                    ],
+                    headers=["Parameter", "Value", "R2"],
+                    stralign="left",
+                    numalign="right",
+                    floatfmt=".3e",
+                    tablefmt="fancy_grid",
+                )
+            )
+            # Mutual table
+            print("LCR fit: Mutual\n")
+            print(
+                tabulate(
+                    [
+                        ["Lm", self.lm.value, f"{self.lm.r2:.3e}"],
+                        [
+                            "km",
+                            self.lm.value / np.sqrt(self.ls1.value * self.ls2.value),
+                            "",
+                        ],
+                    ],
+                    headers=["Parameter", "Value", "R2"],
+                    stralign="left",
+                    numalign="right",
+                    floatfmt=".3e",
+                    tablefmt="fancy_grid",
+                )
+            )
 
 
 @dataclasses.dataclass
@@ -209,6 +261,24 @@ class OptimalLoadGridResults:
         self.Pout = Pout
         self.target_f = target_f
 
+    def print_table(self) -> None:
+        """Print sweep metadata (dimensions and target freq)."""
+        print("Load sweep metadata\n")
+        print(
+            tabulate(
+                [
+                    ["Re(Z) points", self.rez_list.size],
+                    ["Im(Z) points", self.imz_list.size],
+                    ["Target frequency", self.target_f],
+                ],
+                headers=["Parameter", "Value"],
+                stralign="left",
+                numalign="right",
+                floatfmt=".3e",
+                tablefmt="fancy_grid",
+            )
+        )
+
 
 @dataclasses.dataclass
 class RXCFilterResults:
@@ -223,6 +293,28 @@ class RXCFilterResults:
     max_x_opt: float
     max_f_plot: float
     lrx: float
+
+    def print_table(self) -> None:
+        """Print RXC filter summary values."""
+        print("RXC filter summary\n")
+        print(
+            tabulate(
+                [
+                    ["Target frequency", self.max_f_plot],
+                    ["Optimum Re(Zload)", self.max_r_opt],
+                    ["Optimum Im(Zload)", self.max_x_opt],
+                    ["Receiver inductance", self.lrx],
+                    ["Target Rload", self.rload],
+                    ["Cp", self.cp],
+                    ["Cs", self.cs],
+                ],
+                headers=["Parameter", "Value"],
+                stralign="left",
+                numalign="right",
+                floatfmt=".3e",
+                tablefmt="fancy_grid",
+            )
+        )
 
 
 @dataclasses.dataclass

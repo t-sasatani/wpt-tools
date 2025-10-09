@@ -43,6 +43,10 @@ API (coming soon)
    :maxdepth: 2
 
    analysis
+   data_classes
+   load_env
+   plotter
+   solvers
    logger
    instrument
 

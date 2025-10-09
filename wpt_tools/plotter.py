@@ -21,6 +21,7 @@ logger = WPTToolsLogger().get_logger(__name__)
 
 def _attach_escape_close(fig):
     """Close the given figure when ESC is pressed."""
+
     def _on_key(event):
         if event.key == "escape":
             plt.close(fig)
