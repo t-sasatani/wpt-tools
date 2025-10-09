@@ -217,7 +217,8 @@ def compute_rxc_filter(
 
     def Zerror(params):
         Zp = Z(params)
-        return np.linalg.norm([Zp.real - max_r_opt, Zp.imag - max_x_opt])
+        # Legacy behavior: match Re(Z) to Ropt and drive Im(Z) to 0
+        return np.linalg.norm([Zp.real - max_r_opt, Zp.imag])
 
     sol = fmin(Zerror, np.array([100e-12, 100e-12]), xtol=1e-9, ftol=1e-9)
     logger.info(sol)
