@@ -227,8 +227,8 @@ def plot_z_matrix_narrow(rich_nw: RichNetwork, results: LCRFittingResults, targe
             rich_nw.nw.frequency.f[
                 rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
             ],
-            results.ls1,
-            results.cs1,
+            results.ls1.value,
+            results.cs1.value,
         ),
         label="imag(z) fitting",
         color="green",
@@ -241,8 +241,8 @@ def plot_z_matrix_narrow(rich_nw: RichNetwork, results: LCRFittingResults, targe
             rich_nw.nw.frequency.f[
                 rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
             ],
-            results.ls2,
-            results.cs2,
+            results.ls2.value,
+            results.cs2.value,
         ),
         label="imag(z) fitting",
         color="green",
@@ -255,7 +255,7 @@ def plot_z_matrix_narrow(rich_nw: RichNetwork, results: LCRFittingResults, targe
             rich_nw.nw.frequency.f[
                 rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
             ],
-            results.lm,
+            results.lm.value,
         ),
         label="imag(z) fitting",
         color="green",
@@ -268,7 +268,7 @@ def plot_z_matrix_narrow(rich_nw: RichNetwork, results: LCRFittingResults, targe
             rich_nw.nw.frequency.f[
                 rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
             ],
-            results.lm,
+            results.lm.value,
         ),
         label="imag(z) fitting",
         color="green",

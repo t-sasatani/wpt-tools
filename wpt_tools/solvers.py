@@ -5,7 +5,7 @@ Solvers for wpt-tools.
 from typing import Literal, Optional
 
 import numpy as np
-from wpt_tools.data_classes import RichNetwork, override_frange, EfficiencyResults, LCRFittingResults
+from wpt_tools.data_classes import RichNetwork, override_frange, EfficiencyResults, LCRFittingResults, ValR2
 from scipy.optimize import curve_fit
 import sklearn.metrics as metrics
 from wpt_tools.logger import WPTToolsLogger
@@ -144,7 +144,7 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
         p0=np.asarray([1]),
         maxfev=10000,
     )
-    rs1 = popt
+    rs1 = ValR2(value=popt, r2=r2)
 
     results.ls1 = ls1
     results.cs1 = cs1
@@ -162,7 +162,8 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
             p0=np.asarray([1e-6, 1e-9]),
             maxfev=10000,
         )
-        ls2, cs2 = popt
+        ls2 = ValR2(value=popt[0], r2=r2)
+        cs2 = ValR2(value=popt[1], r2=r2)
 
         r2 = metrics.r2_score(
             rich_nw.nw.z[
@@ -172,8 +173,8 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
                 rich_nw.nw.frequency.f[
                     rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
                 ],
-                ls2,
-                cs2,
+                ls2.value,
+                cs2.value,
             ),
         )
         logger.info("R2 for fitting Ls2, Cs2: %f" % (r2))
@@ -189,7 +190,7 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
             p0=np.asarray([1]),
             maxfev=10000,
         )
-        rs2 = popt
+        rs2 = ValR2(value=popt[0], r2=r2)
 
         results.ls2 = ls2
         results.cs2 = cs2
@@ -206,7 +207,7 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
             p0=np.asarray([1e-6]),
             maxfev=10000,
         )
-        lm = popt
+        lm = ValR2(value=popt[0], r2=r2)
         r2 = metrics.r2_score(
             rich_nw.nw.z[
                 rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop, 0, 1
@@ -215,11 +216,11 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
                 rich_nw.nw.frequency.f[
                     rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
                 ],
-                lm,
+                lm.value,
             ),
         )
         logger.info("R2 for fitting Lm: %f" % (r2))
-        results.lm = lm
+        results.lm = ValR2(value=lm.value, r2=r2)
 
 
     return results

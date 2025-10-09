@@ -9,6 +9,29 @@ from typing import Optional, Union
 import numpy as np
 import skrf as rf
 
+@dataclasses.dataclass
+class ValR2:
+    """
+    Pair of value and R2 score.
+
+    Parameters
+    ----------
+    value: float
+        The value.
+    r2: float
+        The R2 score.
+
+    """
+
+    value: Optional[float]
+    r2: Optional[float]
+
+    def __init__(self, value: Optional[float], r2: Optional[float]):
+        """
+        Initialize the class.
+        """
+        self.value = value
+        self.r2 = r2
 
 @dataclasses.dataclass
 class EfficiencyResults:
@@ -64,25 +87,25 @@ class LCRFittingResults:
 
     """
 
-    ls1: float
-    cs1: float
-    rs1: float
-    ls2: float
-    cs2: float
-    rs2: float
-    lm: float
+    ls1: ValR2
+    cs1: ValR2
+    rs1: ValR2
+    ls2: ValR2
+    cs2: ValR2
+    rs2: ValR2
+    lm: ValR2
 
     def __init__(self):
         """
         Initialize the results.
         """
-        self.ls1 = None
-        self.cs1 = None
-        self.rs1 = None
-        self.ls2 = None
-        self.cs2 = None
-        self.rs2 = None
-        self.lm = None
+        self.ls1 = ValR2
+        self.cs1 = ValR2
+        self.rs1 = ValR2
+        self.ls2 = ValR2
+        self.cs2 = ValR2
+        self.rs2 = ValR2
+        self.lm = ValR2
 
 @dataclasses.dataclass
 class RichNetwork:

@@ -2,11 +2,12 @@
 Analysis code for wireless power transfer systems.
 """
 
-from typing import Optional
+from typing import Optional, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fmin
+from dataclasses import dataclass
 from tabulate import tabulate
 
 from wpt_tools.data_classes import RichNetwork, override_frange, EfficiencyResults, LCRFittingResults
@@ -16,6 +17,33 @@ from wpt_tools.logger import WPTToolsLogger
 
 logger = WPTToolsLogger().get_logger(__name__)
 
+@dataclass
+class MinMax:
+    """
+    Class for minimum and maximum values and step size.
+
+    Parameters
+    ----------
+    min: float
+        The minimum value.
+    max: float
+        The maximum value.
+    step: Optional[float]
+        The step size.
+
+    """
+
+    min: float
+    max: float
+    step: Optional[float]
+
+    def __init__(self, min: float, max: float, step: Optional[float]):
+        """
+        Initialize the class.
+        """
+        self.min = min
+        self.max = max
+        self.step = step
 
 class nw_tools:
     """
@@ -148,28 +176,28 @@ class nw_tools:
             print("Fitting values assuming a pair of series LCR resonators\n")
             print(
                 tabulate([
-                    ["Ls1", results.ls1],
-                    ["Cs1", results.cs1],
-                    ["Rs1", results.rs1],
+                    ["Ls1", results.ls1.value, results.ls1.r2],
+                    ["Cs1", results.cs1.value, results.cs1.r2],
+                    ["Rs1", results.rs1.value, results.rs1.r2],
                     ["f_1", 1 / (2 * np.pi * np.sqrt(results.ls1 * results.cs1))],
                     [f"Q_1 (approx., @{rich_nw.target_f:.3e} Hz)", (2 * np.pi * rich_nw.target_f * results.ls1 / results.rs1)[0]]
-                ], headers=["Parameter", "Value"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
+                ], headers=["Parameter", "Value", "R2"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
             )
             if rich_nw.nw.nports == 2:
                 print(
                     tabulate([
-                        ["Ls2", results.ls2],
-                        ["Cs2", results.cs2],
-                        ["Rs2", results.rs2],
+                        ["Ls2", results.ls2.value, results.ls2.r2],
+                        ["Cs2", results.cs2.value, results.cs2.r2],
+                        ["Rs2", results.rs2.value, results.rs2.r2],
                         ["f_2", 1 / (2 * np.pi * np.sqrt(results.ls2 * results.cs2))],
                         [f"Q_2 (approx., @{rich_nw.target_f:.3e} Hz)", (2 * np.pi * rich_nw.target_f * results.ls2 / results.rs2)[0]]
-                    ], headers=["Parameter", "Value"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
+                    ], headers=["Parameter", "Value", "R2"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
                 )
                 print(
                     tabulate([
-                        ["Lm", results.lm],
-                        ["km", results.lm / np.sqrt(results.ls1 * results.ls2)]
-                    ], headers=["Parameter", "Value"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
+                        ["Lm", results.lm.value, results.lm.r2],
+                        ["km", results.lm.value / np.sqrt(results.ls1.value * results.ls2.value)]
+                    ], headers=["Parameter", "Value", "R2"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
                 )
 
         if show_plot is True:
@@ -242,15 +270,10 @@ class nw_tools:
     @staticmethod
     def plot_optimal_load(
         rich_nw: RichNetwork,
-        min_rez,
-        min_imz,
-        max_rez,
-        max_imz,
-        step_rez,
-        step_imz,
-        input_voltage,
-        *,
-        rx_port=2,
+        rez_range: MinMax,
+        imz_range: MinMax,
+        rx_port: Literal[1, 2],
+        input_voltage: Optional[float] = 1,
         target_f: Optional[float] = None,
         range_f: Optional[float] = None,
     ):
@@ -263,41 +286,28 @@ class nw_tools:
         ----------
         rich_nw: RichNetwork
             The network to plot.
-        min_rez: float
-            The minimum real(Zload).
-        min_imz: float
-            The minimum imaginary(Zload).
-        max_rez: float
-            The maximum real(Zload).
-        max_imz: float
-            The maximum imaginary(Zload).
-        step_rez: float
-            The step size for the real(Zload).
-        step_imz: float
-            The step size for the imaginary(Zload).
-        input_voltage: float
-            The input voltage.
+
+        rez_range: MinMax
+            The range of the real(Zload).
+        imz_range: MinMax
+            The range of the imaginary(Zload).
         rx_port: int
-            The port to analyze.
+            The port to plot.
+        input_voltage: Optional[float]
+            The input voltage.
         target_f: Optional[float]
             The target frequency.
         range_f: Optional[float]
-            The range of the target frequency.
-
-        Raises
-        ------
-        ValueError
-            If the target frequency is not found within the specified range.
-        TypeError
-            If the network is not a RichNetwork.
-        ValueError
-            If the rx_port is not 1 or 2.
+            The range of the target frequency.\
 
         """
         rich_nw = override_frange(rich_nw, target_f=target_f, range_f=range_f)
 
-        rez_list = np.arange(min_rez, max_rez, step_rez)
-        imz_list = np.arange(min_imz, max_imz, step_imz)
+        if rich_nw.target_f is None:
+            raise ValueError("target frequency is not set.")
+
+        rez_list = np.arange(rez_range.min, rez_range.max, rez_range.step)
+        imz_list = np.arange(imz_range.min, imz_range.max, imz_range.step)
         eff_grid = np.zeros((rez_list.size, imz_list.size))
         Pin = np.zeros((rez_list.size, imz_list.size))
         Pout = np.zeros((rez_list.size, imz_list.size))
@@ -308,8 +318,6 @@ class nw_tools:
         elif rx_port == 1:
             Z11 = rich_nw.nw.z[rich_nw.target_f_index, 1, 1]
             Z22 = rich_nw.nw.z[rich_nw.target_f_index, 0, 0]
-        else:
-            raise ValueError("set rx_port to 1 or 2.")
 
         Zm = rich_nw.nw.z[rich_nw.target_f_index, 0, 1]
 
