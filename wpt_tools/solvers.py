@@ -176,6 +176,7 @@ def compute_rxc_filter(
     rx_port: Literal[1, 2],
     rload: float,
     *,
+    c_network: Literal["CpCsRl"] = "CpCsRl",
     target_f: Optional[float] = None,
     range_f: Optional[float] = None,
 ) -> RXCFilterResults:
@@ -192,20 +193,34 @@ def compute_rxc_filter(
     max_x_opt = eff.max_x_opt
 
     max_w_plot = 2 * np.pi * max_f_plot
-    if rx_port == 1 or not hasattr(fit, "ls2"):
-        lrx = fit.ls1.value
+    # Prefer port 2 inductance only if a valid fitted value exists
+    if (
+        rx_port == 2
+        and hasattr(fit, "ls2")
+        and isinstance(fit.ls2, ValR2)
+        and fit.ls2 is not ValR2
+        and fit.ls2.value is not None
+    ):
+        lrx = float(fit.ls2.value)
     else:
-        lrx = fit.ls2.value
+        lrx = float(fit.ls1.value)
 
     def Z(params):
-        cp, cs = params
-        return (
-            1 / ((1j * max_w_plot * cp) + 1 / ((1 / (1j * max_w_plot * cs) + rload)))
-            + 1j * max_w_plot * lrx
-        )
+        if c_network == "CpCsRl":
+            cp, cs = params
+            return (
+                1
+                / (
+                    (1j * max_w_plot * cp)
+                    + 1 / ((1 / (1j * max_w_plot * cs) + rload))
+                )
+                + 1j * max_w_plot * lrx
+            )
+        raise NotImplementedError(f"Unsupported c_network: {c_network}")
 
     def Zerror(params):
-        return np.linalg.norm([Z(params).real - max_r_opt, Z(params).imag - max_x_opt])
+        Zp = Z(params)
+        return np.linalg.norm([Zp.real - max_r_opt, Zp.imag - max_x_opt])
 
     sol = fmin(Zerror, np.array([100e-12, 100e-12]), xtol=1e-9, ftol=1e-9)
     logger.info(sol)

@@ -177,12 +177,14 @@ class nw_tools:
         target_f: Optional[float] = None,
         range_f: Optional[float] = None,
         show_data: bool = True,
+        c_network: Literal["CpCsRl"] = "CpCsRl",
     ):
         """Compute receiver RXC filter using solver and print a summary."""
         res = compute_rxc_filter(
             rich_nw,
             rx_port=rx_port,
             rload=rload,
+            c_network=c_network,
             target_f=target_f,
             range_f=range_f,
         )

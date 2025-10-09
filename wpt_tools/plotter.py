@@ -19,6 +19,15 @@ from wpt_tools.solvers import series_lcr_xm, series_lcr_xself
 logger = WPTToolsLogger().get_logger(__name__)
 
 
+def _attach_escape_close(fig):
+    """Close the given figure when ESC is pressed."""
+    def _on_key(event):
+        if event.key == "escape":
+            plt.close(fig)
+
+    fig.canvas.mpl_connect("key_press_event", _on_key)
+
+
 def plot_efficiency(results: EfficiencyResults, rich_nw: RichNetwork):
     """
     Plot the efficiency results.
@@ -37,6 +46,7 @@ def plot_efficiency(results: EfficiencyResults, rich_nw: RichNetwork):
     """
     logger.info("Plotting efficiency results.")
     fig, axs = plt.subplots(1, 3, figsize=(18, 4))
+    _attach_escape_close(fig)
 
     axs[0].plot(results.f_plot, results.eff_opt)
     axs[0].set_title("Maximum efficiency")
@@ -97,6 +107,7 @@ def plot_impedance(
 
     if nports == 1:
         fig, axs = plt.subplots(1, 1, figsize=(5, 3.5))
+        _attach_escape_close(fig)
         twin = axs.twinx()
 
         lw = 3 if not full_range else 1
@@ -161,6 +172,7 @@ def plot_impedance(
 
     # Two-port plotting
     fig, axs = plt.subplots(1, 4, figsize=(18, 3.5))
+    _attach_escape_close(fig)
     twins = [axs[i].twinx() for i in range(4)]
 
     for rx_port in range(1, 3):
@@ -271,6 +283,7 @@ def plot_impedance(
 def plot_load_sweep(results: OptimalLoadGridResults):
     """Plot efficiency, input power and output power over a grid (model-driven)."""
     fig, axs = plt.subplots(1, 3, figsize=(18, 5))
+    _attach_escape_close(fig)
 
     c = axs[0].pcolor(
         results.imz_list,
