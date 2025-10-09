@@ -5,20 +5,17 @@ Analysis code for wireless power transfer systems.
 from dataclasses import dataclass
 from typing import Literal, Optional
 
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy.optimize import fmin
 from tabulate import tabulate
 
-from wpt_tools.data_classes import (
-    EfficiencyResults,
-    LCRFittingResults,
-    RichNetwork,
-    override_frange,
-)
+from wpt_tools.data_classes import EfficiencyResults, LCRFittingResults, RichNetwork
 from wpt_tools.logger import WPTToolsLogger
-from wpt_tools.plotter import plot_efficiency, plot_impedance
-from wpt_tools.solvers import efficiency_calculator, lcr_fitting
+from wpt_tools.plotter import plot_efficiency, plot_impedance, plot_load_sweep
+from wpt_tools.solvers import (
+    compute_load_sweep,
+    compute_rxc_filter,
+    efficiency_calculator,
+    lcr_fitting,
+)
 
 logger = WPTToolsLogger().get_logger(__name__)
 
@@ -154,99 +151,14 @@ class nw_tools:
 
         """
         results = lcr_fitting(rich_nw, target_f=target_f, range_f=range_f)
+        # Provide context so results can print tables without external inputs
+        results._target_f = (
+            float(rich_nw.target_f) if rich_nw.target_f is not None else None
+        )
+        results._nports = int(getattr(rich_nw.nw, "nports", 1))
 
         if show_data is True:
-
-            print("Fitting values assuming a pair of series LCR resonators\n")
-            print(
-                tabulate(
-                    [
-                        ["Ls1", results.ls1.value, f"{results.ls1.r2:.3e}"],
-                        ["Cs1", results.cs1.value, f"{results.cs1.r2:.3e}"],
-                        ["Rs1", results.rs1.value, f"{results.rs1.r2:.3e}"],
-                        [
-                            "f_1",
-                            1
-                            / (
-                                2
-                                * np.pi
-                                * np.sqrt(results.ls1.value * results.cs1.value)
-                            ),
-                            "",
-                        ],
-                        [
-                            f"Q_1 (approx., @{rich_nw.target_f:.3e} Hz)",
-                            (
-                                2
-                                * np.pi
-                                * float(rich_nw.target_f)
-                                * results.ls1.value
-                                / results.rs1.value
-                            ),
-                            "",
-                        ],
-                    ],
-                    headers=["Parameter", "Value", "R2"],
-                    stralign="left",
-                    numalign="right",
-                    floatfmt=".3e",
-                    tablefmt="fancy_grid",
-                )
-            )
-            if rich_nw.nw.nports == 2:
-                print(
-                    tabulate(
-                        [
-                            ["Ls2", results.ls2.value, f"{results.ls2.r2:.3e}"],
-                            ["Cs2", results.cs2.value, f"{results.cs2.r2:.3e}"],
-                            ["Rs2", results.rs2.value, f"{results.rs2.r2:.3e}"],
-                            [
-                                "f_2",
-                                1
-                                / (
-                                    2
-                                    * np.pi
-                                    * np.sqrt(results.ls2.value * results.cs2.value)
-                                ),
-                                "",
-                            ],
-                            [
-                                f"Q_2 (approx., @{rich_nw.target_f:.3e} Hz)",
-                                (
-                                    2
-                                    * np.pi
-                                    * float(rich_nw.target_f)
-                                    * results.ls2.value
-                                    / results.rs2.value
-                                ),
-                                "",
-                            ],
-                        ],
-                        headers=["Parameter", "Value", "R2"],
-                        stralign="left",
-                        numalign="right",
-                        floatfmt=".3e",
-                        tablefmt="fancy_grid",
-                    )
-                )
-                print(
-                    tabulate(
-                        [
-                            ["Lm", results.lm.value, f"{results.lm.r2:.3e}"],
-                            [
-                                "km",
-                                results.lm.value
-                                / np.sqrt(results.ls1.value * results.ls2.value),
-                                "",
-                            ],
-                        ],
-                        headers=["Parameter", "Value", "R2"],
-                        stralign="left",
-                        numalign="right",
-                        floatfmt=".3e",
-                        tablefmt="fancy_grid",
-                    )
-                )
+            results.print_tables()
 
         if show_plot is True:
             # Plot within the narrow range by default; overlay fits when available
@@ -259,68 +171,45 @@ class nw_tools:
     @staticmethod
     def calc_rxc_filter(
         rich_nw: RichNetwork,
-        rx_port,
-        rload,
+        rx_port: Literal[1, 2],
+        rload: float,
         *,
-        c_network: str = "CpCsRl",
         target_f: Optional[float] = None,
         range_f: Optional[float] = None,
+        show_data: bool = True,
     ):
-        """Compute receiver capacitor values for a target load at the optimal point."""
-        rich_nw = override_frange(rich_nw, target_f=target_f, range_f=range_f)
-
-        results = nw_tools.fit_z_narrow(rich_nw, show_plot=0, show_data=0)
-        max_f_plot, max_eff_opt, max_r_opt, max_x_opt = nw_tools.analyze_efficiency(
-            rich_nw, rx_port=rx_port, show_plot=0, show_data=0
+        """Compute receiver RXC filter using solver and print a summary."""
+        res = compute_rxc_filter(
+            rich_nw,
+            rx_port=rx_port,
+            rload=rload,
+            target_f=target_f,
+            range_f=range_f,
         )
 
-        max_w_plot = 2 * np.pi * max_f_plot
-        if rx_port == 1:
-            lrx = results.ls1
-        elif rx_port == 2:
-            lrx = results.ls2
-        else:
-            raise ValueError("set rx_port parameter to 1 or 2")
-
-        print("-----------Analysis results-----------")
-        print(
-            tabulate(
-                [
-                    ["Target frequency", results.max_f_plot],
-                    ["Maximum efficiency", max_eff_opt],
-                    ["Receiver inductance", lrx],
-                    ["Optimum load", max_r_opt],
-                    ["Target Rload", rload],
-                ],
-                headers=["Parameter", "Value"],
-                stralign="left",
-                numalign="right",
-                floatfmt=".3e",
-                tablefmt="fancy_grid",
-            )
-        )
-
-        if c_network == "CpCsRl":
-
-            def Z(params):
-                cp, cs = params
-                return (
-                    1
-                    / (
-                        (1j * max_w_plot * cp)
-                        + 1 / ((1 / (1j * max_w_plot * cs) + rload))
-                    )
-                    + 1j * max_w_plot * lrx
+        if show_data:
+            print("-----------RXC Filter results-----------")
+            print(
+                tabulate(
+                    [
+                        ["Target frequency", res.max_f_plot],
+                        ["Optimum Re(Zload)", res.max_r_opt],
+                        ["Optimum Im(Zload)", res.max_x_opt],
+                        ["Receiver inductance", res.lrx],
+                        ["Target Rload", res.rload],
+                        ["Cp", res.cp],
+                        ["Cs", res.cs],
+                    ],
+                    headers=["Parameter", "Value"],
+                    stralign="left",
+                    numalign="right",
+                    floatfmt=".3e",
+                    tablefmt="fancy_grid",
                 )
-
-            def Zerror(params):
-                return np.linalg.norm([Z(params).real - max_r_opt, Z(params).imag])
-
-        sol = fmin(Zerror, np.array([100e-12, 100e-12]), xtol=1e-9, ftol=1e-9)
-        logger.info(sol)
+            )
 
     @staticmethod
-    def plot_optimal_load(
+    def sweep_load(
         rich_nw: RichNetwork,
         rez_range: MinMax,
         imz_range: MinMax,
@@ -328,101 +217,22 @@ class nw_tools:
         input_voltage: Optional[float] = 1,
         target_f: Optional[float] = None,
         range_f: Optional[float] = None,
+        show_plot: bool = True,
     ):
-        """Plot efficiency, input power and output power over a grid of complex loads.
-
-        Optimal load visualization
-        Imura, "Wireless Power Transfer: Using Magnetic and Electric Resonance Coupling Techniques," Springer Singapore 2020.
-
-        Parameters
-        ----------
-        rich_nw: RichNetwork
-            The network to plot.
-
-        rez_range: MinMax
-            The range of the real(Zload).
-        imz_range: MinMax
-            The range of the imaginary(Zload).
-        rx_port: int
-            The port to plot.
-        input_voltage: Optional[float]
-            The input voltage.
-        target_f: Optional[float]
-            The target frequency.
-        range_f: Optional[float]
-            The range of the target frequency.\
-
-        """
-        rich_nw = override_frange(rich_nw, target_f=target_f, range_f=range_f)
-
-        if rich_nw.target_f is None:
-            raise ValueError("target frequency is not set.")
-
-        rez_list = np.arange(rez_range.min, rez_range.max, rez_range.step)
-        imz_list = np.arange(imz_range.min, imz_range.max, imz_range.step)
-        eff_grid = np.zeros((rez_list.size, imz_list.size))
-        Pin = np.zeros((rez_list.size, imz_list.size))
-        Pout = np.zeros((rez_list.size, imz_list.size))
-
-        if rx_port == 2:
-            Z11 = rich_nw.nw.z[rich_nw.target_f_index, 0, 0]
-            Z22 = rich_nw.nw.z[rich_nw.target_f_index, 1, 1]
-        elif rx_port == 1:
-            Z11 = rich_nw.nw.z[rich_nw.target_f_index, 1, 1]
-            Z22 = rich_nw.nw.z[rich_nw.target_f_index, 0, 0]
-
-        Zm = rich_nw.nw.z[rich_nw.target_f_index, 0, 1]
-
-        for rez_index in range(rez_list.size):
-            for imz_index in range(imz_list.size):
-                ZL = rez_list[rez_index] + 1j * imz_list[imz_index]
-                V1 = input_voltage  # arbitrary
-                I1 = (Z22 + ZL) / (Z11 * (Z22 + ZL) - Zm**2) * V1
-                I2 = -Zm / (Z11 * (Z22 + ZL) - Zm**2) * V1
-                V2 = Zm * ZL / (Z11 * (Z22 + ZL) - Zm**2) * V1
-
-                Pin[rez_index][imz_index] = (V1 * I1.conjugate()).real
-                Pout[rez_index][imz_index] = (V2 * (-I2.conjugate())).real
-                eff_grid[rez_index][imz_index] = (V2 * (-I2.conjugate())).real / (
-                    V1 * I1.conjugate()
-                ).real
-
-        fig, axs = plt.subplots(1, 3, figsize=(18, 5))
-
-        c = axs[0].pcolor(
-            imz_list, rez_list, eff_grid, cmap="hot", vmin=0, vmax=1, shading="auto"
+        """Compute load sweep results and optionally plot them. Returns results."""
+        results = compute_load_sweep(
+            rich_nw,
+            rez_min=rez_range.min,
+            rez_max=rez_range.max,
+            rez_step=rez_range.step,
+            imz_min=imz_range.min,
+            imz_max=imz_range.max,
+            imz_step=imz_range.step,
+            rx_port=rx_port,
+            input_voltage=input_voltage,
+            target_f=target_f,
+            range_f=range_f,
         )
-        fig.colorbar(c, ax=axs[0])
-        axs[0].set_title(
-            "Efficiency @ "
-            + format(rich_nw.nw.frequency.f[rich_nw.target_f_index], "3.2e")
-            + " Hz"
-        )
-        axs[0].set_ylabel("Re(Z_load)")
-        axs[0].set_xlabel("Im(Z_load)")
-
-        c = axs[1].pcolor(
-            imz_list, rez_list, Pin, cmap="hot", vmin=0, vmax=Pin.max(), shading="auto"
-        )
-        fig.colorbar(c, ax=axs[1])
-        axs[1].set_title(
-            "Input Power (W) @ "
-            + format(rich_nw.nw.frequency.f[rich_nw.target_f_index], "3.2e")
-            + " Hz"
-        )
-        axs[1].set_ylabel("Re(Z_load)")
-        axs[1].set_xlabel("Im(Z_load)")
-
-        c = axs[2].pcolor(
-            imz_list, rez_list, Pout, cmap="hot", vmin=0, vmax=Pin.max(), shading="auto"
-        )
-        fig.colorbar(c, ax=axs[2])
-        axs[2].set_title(
-            "Output Power (W) @ "
-            + format(rich_nw.nw.frequency.f[rich_nw.target_f_index], "3.2e")
-            + " Hz"
-        )
-        axs[2].set_ylabel("Re(Z_load)")
-        axs[2].set_xlabel("Im(Z_load)")
-
-        fig.tight_layout()
+        if show_plot:
+            plot_load_sweep(results)
+        return results

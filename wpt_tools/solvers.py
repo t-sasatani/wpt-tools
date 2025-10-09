@@ -6,18 +6,21 @@ from typing import Literal, Optional
 
 import numpy as np
 import sklearn.metrics as metrics
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, fmin
 
 from wpt_tools.data_classes import (
     EfficiencyResults,
     LCRFittingResults,
+    OptimalLoadGridResults,
     RichNetwork,
+    RXCFilterResults,
     ValR2,
     override_frange,
 )
 from wpt_tools.logger import WPTToolsLogger
 
 logger = WPTToolsLogger().get_logger(__name__)
+r2_threshold = 0.9
 
 
 def series_lcr_xself(x, ls, cs):
@@ -110,6 +113,115 @@ def efficiency_calculator(
     return results
 
 
+def compute_load_sweep(
+    rich_nw: RichNetwork,
+    rez_min: float,
+    rez_max: float,
+    rez_step: float,
+    imz_min: float,
+    imz_max: float,
+    imz_step: float,
+    rx_port: Literal[1, 2],
+    input_voltage: Optional[float] = 1,
+    target_f: Optional[float] = None,
+    range_f: Optional[float] = None,
+) -> OptimalLoadGridResults:
+    """Compute efficiency, input and output power over a grid (load sweep)."""
+    rich_nw = override_frange(rich_nw, target_f=target_f, range_f=range_f)
+    if rich_nw.target_f is None:
+        raise ValueError("target frequency is not set.")
+
+    rez_list = np.arange(rez_min, rez_max, rez_step)
+    imz_list = np.arange(imz_min, imz_max, imz_step)
+    eff_grid = np.zeros((rez_list.size, imz_list.size))
+    Pin = np.zeros((rez_list.size, imz_list.size))
+    Pout = np.zeros((rez_list.size, imz_list.size))
+
+    if rx_port == 2:
+        Z11 = rich_nw.nw.z[rich_nw.target_f_index, 0, 0]
+        Z22 = rich_nw.nw.z[rich_nw.target_f_index, 1, 1]
+    elif rx_port == 1:
+        Z11 = rich_nw.nw.z[rich_nw.target_f_index, 1, 1]
+        Z22 = rich_nw.nw.z[rich_nw.target_f_index, 0, 0]
+    else:
+        raise ValueError("set rx_port to 1 or 2.")
+    Zm = rich_nw.nw.z[rich_nw.target_f_index, 0, 1]
+
+    for rez_index in range(rez_list.size):
+        for imz_index in range(imz_list.size):
+            ZL = rez_list[rez_index] + 1j * imz_list[imz_index]
+            V1 = input_voltage  # arbitrary
+            I1 = (Z22 + ZL) / (Z11 * (Z22 + ZL) - Zm**2) * V1
+            I2 = -Zm / (Z11 * (Z22 + ZL) - Zm**2) * V1
+            V2 = Zm * ZL / (Z11 * (Z22 + ZL) - Zm**2) * V1
+
+            Pin[rez_index][imz_index] = (V1 * I1.conjugate()).real
+            Pout[rez_index][imz_index] = (V2 * (-I2.conjugate())).real
+            eff_grid[rez_index][imz_index] = (V2 * (-I2.conjugate())).real / (
+                V1 * I1.conjugate()
+            ).real
+
+    return OptimalLoadGridResults(
+        rez_list=rez_list,
+        imz_list=imz_list,
+        eff_grid=eff_grid,
+        Pin=Pin,
+        Pout=Pout,
+        target_f=float(rich_nw.nw.frequency.f[rich_nw.target_f_index]),
+    )
+
+
+def compute_rxc_filter(
+    rich_nw: RichNetwork,
+    rx_port: Literal[1, 2],
+    rload: float,
+    *,
+    target_f: Optional[float] = None,
+    range_f: Optional[float] = None,
+) -> RXCFilterResults:
+    """Compute receiver capacitor values for a target load at the optimal point."""
+    rich_nw = override_frange(rich_nw, target_f=target_f, range_f=range_f)
+
+    fit = lcr_fitting(rich_nw, target_f=target_f, range_f=range_f)
+    eff = efficiency_calculator(
+        rich_nw, rx_port=rx_port, target_f=target_f, range_f=range_f
+    )
+
+    max_f_plot = eff.max_f_plot
+    max_r_opt = eff.max_r_opt
+    max_x_opt = eff.max_x_opt
+
+    max_w_plot = 2 * np.pi * max_f_plot
+    if rx_port == 1 or not hasattr(fit, "ls2"):
+        lrx = fit.ls1.value
+    else:
+        lrx = fit.ls2.value
+
+    def Z(params):
+        cp, cs = params
+        return (
+            1 / ((1j * max_w_plot * cp) + 1 / ((1 / (1j * max_w_plot * cs) + rload)))
+            + 1j * max_w_plot * lrx
+        )
+
+    def Zerror(params):
+        return np.linalg.norm([Z(params).real - max_r_opt, Z(params).imag - max_x_opt])
+
+    sol = fmin(Zerror, np.array([100e-12, 100e-12]), xtol=1e-9, ftol=1e-9)
+    logger.info(sol)
+    cp, cs = float(sol[0]), float(sol[1])
+
+    return RXCFilterResults(
+        cp=cp,
+        cs=cs,
+        rload=float(rload),
+        max_r_opt=float(max_r_opt),
+        max_x_opt=float(max_x_opt),
+        max_f_plot=float(max_f_plot),
+        lrx=float(lrx),
+    )
+
+
 def lcr_fitting(
     rich_nw: RichNetwork,
     target_f: Optional[float] = None,
@@ -145,8 +257,8 @@ def lcr_fitting(
             cs1,
         ),
     )
-
-    logger.info("R2 for fitting Ls1, Cs1: %f" % (r2))
+    if r2 < r2_threshold:
+        logger.warning(f"R2 for fitting Ls1, Cs1 is {r2}")
 
     popt, _ = curve_fit(
         series_lcr_rself,
@@ -194,8 +306,8 @@ def lcr_fitting(
                 cs2.value,
             ),
         )
-        logger.info("R2 for fitting Ls2, Cs2: %f" % (r2))
-
+        if r2 < r2_threshold:
+            logger.warning(f"R2 for fitting Ls2, Cs2 is {ls2.r2}")
         popt, _ = curve_fit(
             series_lcr_rself,
             rich_nw.nw.frequency.f[
@@ -212,6 +324,9 @@ def lcr_fitting(
         results.ls2 = ls2
         results.cs2 = cs2
         results.rs2 = rs2
+
+        if r2 < r2_threshold:
+            logger.warning(f"R2 for fitting Rs2 is {rs2.r2}")
 
         popt, _ = curve_fit(
             series_lcr_xm,
@@ -236,7 +351,8 @@ def lcr_fitting(
                 lm_value,
             ),
         )
-        logger.info("R2 for fitting Lm: %f" % (r2))
+        if r2 < r2_threshold:
+            logger.warning(f"R2 for fitting Lm is {r2}")
         results.lm = ValR2(value=lm_value, r2=r2)
 
     return results

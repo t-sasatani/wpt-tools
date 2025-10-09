@@ -7,7 +7,12 @@ from typing import Optional
 import matplotlib.pyplot as plt
 from IPython import get_ipython
 
-from wpt_tools.data_classes import EfficiencyResults, LCRFittingResults, RichNetwork
+from wpt_tools.data_classes import (
+    EfficiencyResults,
+    LCRFittingResults,
+    OptimalLoadGridResults,
+    RichNetwork,
+)
 from wpt_tools.logger import WPTToolsLogger
 from wpt_tools.solvers import series_lcr_xm, series_lcr_xself
 
@@ -74,7 +79,7 @@ def plot_impedance(
     - For 2-port: plots 4 subplots for Z11, Z12, Z21, Z22 real/imag. If results provided, overlays fits for self and mutual reactances.
     - By default, plots within `rich_nw` narrow range; set `full_range=True` to plot full sweep.
     """
-    logger.info("Plotting impedance (unified). full_range=%s" % (full_range))
+    logger.info("Plotting impedance. full_range=%s" % (full_range))
 
     # Determine frequency slice
     if full_range:
@@ -256,6 +261,59 @@ def plot_impedance(
             label="imag(z) fitting",
             color="green",
         )
+
+    fig.tight_layout()
+    if not get_ipython():
+        plt.show()
+    return None
+
+
+def plot_load_sweep(results: OptimalLoadGridResults):
+    """Plot efficiency, input power and output power over a grid (model-driven)."""
+    fig, axs = plt.subplots(1, 3, figsize=(18, 5))
+
+    c = axs[0].pcolor(
+        results.imz_list,
+        results.rez_list,
+        results.eff_grid,
+        cmap="hot",
+        vmin=0,
+        vmax=1,
+        shading="auto",
+    )
+    fig.colorbar(c, ax=axs[0])
+    title_f = f" @ {results.target_f:.2e} Hz" if results.target_f is not None else ""
+    axs[0].set_title("Efficiency" + title_f)
+    axs[0].set_ylabel("Re(Z_load)")
+    axs[0].set_xlabel("Im(Z_load)")
+
+    c = axs[1].pcolor(
+        results.imz_list,
+        results.rez_list,
+        results.Pin,
+        cmap="hot",
+        vmin=0,
+        vmax=results.Pin.max(),
+        shading="auto",
+    )
+    fig.colorbar(c, ax=axs[1])
+    axs[1].set_title("Input Power (W)" + title_f)
+    axs[1].set_ylabel("Re(Z_load)")
+    axs[1].set_xlabel("Im(Z_load)")
+
+    c = axs[2].pcolor(
+        results.imz_list,
+        results.rez_list,
+        results.Pout,
+        cmap="hot",
+        vmin=0,
+        vmax=results.Pin.max(),
+        shading="auto",
+    )
+    fig.colorbar(c, ax=axs[2])
+    axs[2].set_title("Output Power (W)" + title_f)
+    axs[2].set_ylabel("Re(Z_load)")
+    axs[2].set_xlabel("Im(Z_load)")
 
     fig.tight_layout()
     if not get_ipython():

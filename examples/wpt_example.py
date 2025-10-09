@@ -24,7 +24,7 @@ if __name__ == "__main__":
         rich_nw=example_nw, show_plot=True, target_f=target_f, range_f=range_f
     )
 
-    nw_tools.plot_optimal_load(
+    nw_tools.sweep_load(
         rich_nw=example_nw,
         rez_range=MinMax(min=0.1, max=50, step=0.2),
         imz_range=MinMax(min=-200, max=200, step=1),

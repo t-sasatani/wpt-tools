@@ -8,6 +8,7 @@ from typing import Optional, Union
 
 import numpy as np
 import skrf as rf
+from tabulate import tabulate
 
 
 @dataclasses.dataclass
@@ -109,6 +110,119 @@ class LCRFittingResults:
         self.cs2 = ValR2
         self.rs2 = ValR2
         self.lm = ValR2
+        # Context for printing without external inputs
+        self._target_f: Optional[float] = None
+        self._nports: Optional[int] = None
+
+    def print_tables(self) -> None:
+        """
+        Print a single combined LCR fit results table with R2 and derived values.
+        """
+        target_f = self._target_f
+        nports = (
+            self._nports
+            if self._nports is not None
+            else (2 if hasattr(self, "ls2") and isinstance(self.ls2, ValR2) else 1)
+        )
+        rows: list[list[object]] = []
+        # Port 1 rows
+        rows.append(["Ls1", self.ls1.value, f"{self.ls1.r2:.3e}"])
+        rows.append(["Cs1", self.cs1.value, f"{self.cs1.r2:.3e}"])
+        rows.append(["Rs1", self.rs1.value, f"{self.rs1.r2:.3e}"])
+        rows.append(
+            ["f_1", 1 / (2 * np.pi * np.sqrt(self.ls1.value * self.cs1.value)), ""]
+        )
+        rows.append(
+            (
+                [
+                    f"Q_1 (approx., @{target_f:.3e} Hz)",
+                    2 * np.pi * float(target_f) * self.ls1.value / self.rs1.value,
+                    "",
+                ]
+                if target_f is not None
+                else ["Q_1 (approx.)", "", ""]
+            )
+        )
+        # Port 2 rows if available
+        if nports == 2:
+            rows.append(["Ls2", self.ls2.value, f"{self.ls2.r2:.3e}"])
+            rows.append(["Cs2", self.cs2.value, f"{self.cs2.r2:.3e}"])
+            rows.append(["Rs2", self.rs2.value, f"{self.rs2.r2:.3e}"])
+            rows.append(
+                ["f_2", 1 / (2 * np.pi * np.sqrt(self.ls2.value * self.cs2.value)), ""]
+            )
+            rows.append(
+                (
+                    [
+                        f"Q_2 (approx., @{target_f:.3e} Hz)",
+                        2 * np.pi * float(target_f) * self.ls2.value / self.rs2.value,
+                        "",
+                    ]
+                    if target_f is not None
+                    else ["Q_2 (approx.)", "", ""]
+                )
+            )
+            rows.append(["Lm", self.lm.value, f"{self.lm.r2:.3e}"])
+            rows.append(
+                ["km", self.lm.value / np.sqrt(self.ls1.value * self.ls2.value), ""]
+            )
+
+        print(
+            tabulate(
+                rows,
+                headers=["Parameter", "Value", "R2"],
+                stralign="left",
+                numalign="right",
+                floatfmt=".3e",
+                tablefmt="fancy_grid",
+            )
+        )
+
+
+@dataclasses.dataclass
+class OptimalLoadGridResults:
+    """
+    Results for optimal load grid sweep (efficiency, Pin, Pout).
+    """
+
+    rez_list: np.ndarray
+    imz_list: np.ndarray
+    eff_grid: np.ndarray
+    Pin: np.ndarray
+    Pout: np.ndarray
+    target_f: Optional[float]
+
+    def __init__(
+        self,
+        rez_list: np.ndarray,
+        imz_list: np.ndarray,
+        eff_grid: np.ndarray,
+        Pin: np.ndarray,
+        Pout: np.ndarray,
+        target_f: Optional[float],
+    ):
+        """Initialize the optimal load grid results."""
+        self.rez_list = rez_list
+        self.imz_list = imz_list
+        self.eff_grid = eff_grid
+        self.Pin = Pin
+        self.Pout = Pout
+        self.target_f = target_f
+
+
+@dataclasses.dataclass
+class RXCFilterResults:
+    """
+    Results for receiver RXC filter calculation at optimal point.
+    """
+
+    cp: float
+    cs: float
+    rload: float
+    max_r_opt: float
+    max_x_opt: float
+    max_f_plot: float
+    lrx: float
 
 
 @dataclasses.dataclass
