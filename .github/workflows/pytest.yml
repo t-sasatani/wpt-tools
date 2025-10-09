@@ -37,8 +37,8 @@ jobs:
       - name: Create virtual environment
         run: uv venv
 
-      - name: Install Dependencies
-        run: uv pip install -e ".[dev]"
+      - name: Install Dependencies from lock (dev group)
+        run: uv sync --frozen -g dev
 
       - name: Run Tests
         run: uv run pytest --cov=wpt_tools --cov-branch --cov-report=term-missing --cov-report=xml
