@@ -176,26 +176,26 @@ class nw_tools:
             print("Fitting values assuming a pair of series LCR resonators\n")
             print(
                 tabulate([
-                    ["Ls1", results.ls1.value, results.ls1.r2],
-                    ["Cs1", results.cs1.value, results.cs1.r2],
-                    ["Rs1", results.rs1.value, results.rs1.r2],
-                    ["f_1", 1 / (2 * np.pi * np.sqrt(results.ls1 * results.cs1))],
-                    [f"Q_1 (approx., @{rich_nw.target_f:.3e} Hz)", (2 * np.pi * rich_nw.target_f * results.ls1 / results.rs1)[0]]
+                    ["Ls1", results.ls1.value, f"{results.ls1.r2:.3e}"],
+                    ["Cs1", results.cs1.value, f"{results.cs1.r2:.3e}"],
+                    ["Rs1", results.rs1.value, f"{results.rs1.r2:.3e}"],
+                    ["f_1", 1 / (2 * np.pi * np.sqrt(results.ls1.value * results.cs1.value)), ""],
+                    [f"Q_1 (approx., @{rich_nw.target_f:.3e} Hz)", (2 * np.pi * float(rich_nw.target_f) * results.ls1.value / results.rs1.value), ""]
                 ], headers=["Parameter", "Value", "R2"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
             )
             if rich_nw.nw.nports == 2:
                 print(
                     tabulate([
-                        ["Ls2", results.ls2.value, results.ls2.r2],
-                        ["Cs2", results.cs2.value, results.cs2.r2],
-                        ["Rs2", results.rs2.value, results.rs2.r2],
-                        ["f_2", 1 / (2 * np.pi * np.sqrt(results.ls2 * results.cs2))],
-                        [f"Q_2 (approx., @{rich_nw.target_f:.3e} Hz)", (2 * np.pi * rich_nw.target_f * results.ls2 / results.rs2)[0]]
+                        ["Ls2", results.ls2.value, f"{results.ls2.r2:.3e}"],
+                        ["Cs2", results.cs2.value, f"{results.cs2.r2:.3e}"],
+                        ["Rs2", results.rs2.value, f"{results.rs2.r2:.3e}"],
+                        ["f_2", 1 / (2 * np.pi * np.sqrt(results.ls2.value * results.cs2.value)), ""],
+                        [f"Q_2 (approx., @{rich_nw.target_f:.3e} Hz)", (2 * np.pi * float(rich_nw.target_f) * results.ls2.value / results.rs2.value), ""]
                     ], headers=["Parameter", "Value", "R2"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
                 )
                 print(
                     tabulate([
-                        ["Lm", results.lm.value, results.lm.r2],
+                        ["Lm", results.lm.value, f"{results.lm.r2:.3e}"],
                         ["km", results.lm.value / np.sqrt(results.ls1.value * results.ls2.value)]
                     ], headers=["Parameter", "Value", "R2"], stralign='left', numalign='right', floatfmt='.3e', tablefmt='fancy_grid')
                 )

@@ -144,10 +144,12 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
         p0=np.asarray([1]),
         maxfev=10000,
     )
-    rs1 = ValR2(value=popt, r2=r2)
+    # Ensure scalar for rs1 value
+    rs1 = ValR2(value=float(popt[0]), r2=r2)
 
-    results.ls1 = ls1
-    results.cs1 = cs1
+    # Store fitted values with R2 for port 1
+    results.ls1 = ValR2(value=float(ls1), r2=r2)
+    results.cs1 = ValR2(value=float(cs1), r2=r2)
     results.rs1 = rs1
 
     if rich_nw.nw.nports == 2:
@@ -162,8 +164,8 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
             p0=np.asarray([1e-6, 1e-9]),
             maxfev=10000,
         )
-        ls2 = ValR2(value=popt[0], r2=r2)
-        cs2 = ValR2(value=popt[1], r2=r2)
+        ls2 = ValR2(value=float(popt[0]), r2=r2)
+        cs2 = ValR2(value=float(popt[1]), r2=r2)
 
         r2 = metrics.r2_score(
             rich_nw.nw.z[
@@ -190,7 +192,7 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
             p0=np.asarray([1]),
             maxfev=10000,
         )
-        rs2 = ValR2(value=popt[0], r2=r2)
+        rs2 = ValR2(value=float(popt[0]), r2=r2)
 
         results.ls2 = ls2
         results.cs2 = cs2
@@ -207,7 +209,7 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
             p0=np.asarray([1e-6]),
             maxfev=10000,
         )
-        lm = ValR2(value=popt[0], r2=r2)
+        lm_value = float(popt[0])
         r2 = metrics.r2_score(
             rich_nw.nw.z[
                 rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop, 0, 1
@@ -216,11 +218,11 @@ def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f:
                 rich_nw.nw.frequency.f[
                     rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
                 ],
-                lm.value,
+                lm_value,
             ),
         )
         logger.info("R2 for fitting Lm: %f" % (r2))
-        results.lm = ValR2(value=lm.value, r2=r2)
+        results.lm = ValR2(value=lm_value, r2=r2)
 
 
     return results
