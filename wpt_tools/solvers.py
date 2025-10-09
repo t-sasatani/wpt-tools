@@ -198,7 +198,6 @@ def compute_rxc_filter(
         rx_port == 2
         and hasattr(fit, "ls2")
         and isinstance(fit.ls2, ValR2)
-        and fit.ls2 is not ValR2
         and fit.ls2.value is not None
     ):
         lrx = float(fit.ls2.value)
