@@ -6,7 +6,7 @@ from typing import Literal, Optional
 
 import numpy as np
 import sklearn.metrics as metrics
-from scipy.optimize import curve_fit, fmin
+from scipy.optimize import curve_fit, minimize
 
 from wpt_tools.data_classes import (
     EfficiencyResults,
@@ -220,9 +220,41 @@ def compute_rxc_filter(
         # Legacy behavior: match Re(Z) to Ropt and drive Im(Z) to 0
         return np.linalg.norm([Zp.real - max_r_opt, Zp.imag])
 
-    sol = fmin(Zerror, np.array([100e-12, 100e-12]), xtol=1e-9, ftol=1e-9)
-    logger.info(sol)
-    cp, cs = float(sol[0]), float(sol[1])
+    # Use log-domain bounded optimization to avoid sticking at bounds
+    # Heuristic initial guess: cancel imag with series Cs ~ 1/(w^2 L), small Cp
+    cs_heur = max(min(1.0 / (max_w_plot**2 * max(lrx, 1e-12)), 1e-6), 1e-13)
+    cp_heur = 1e-12
+    y0 = np.log10([cp_heur, cs_heur])
+    ybounds = [(-13.0, -6.0), (-13.0, -6.0)]
+
+    def Z_y(y):
+        c = 10.0 ** np.asarray(y, dtype=float)
+        return Z(c)
+
+    def Zerror_y(y):
+        Zp = Z_y(y)
+        return np.linalg.norm([Zp.real - max_r_opt, Zp.imag])
+
+    seeds = [
+        y0,
+        np.log10([5e-13, cs_heur]),
+        np.log10([5e-12, cs_heur * 0.5]),
+        np.log10([1e-11, cs_heur * 2.0]),
+    ]
+    best = None
+    for y_init in seeds:
+        res = minimize(
+            Zerror_y,
+            y_init,
+            method="L-BFGS-B",
+            bounds=ybounds,
+            options={"maxiter": 20000, "ftol": 1e-15},
+        )
+        if best is None or res.fun < best.fun:
+            best = res
+
+    cp, cs = (10.0 ** float(best.x[0])), (10.0 ** float(best.x[1]))
+    logger.info(np.array([cp, cs]))
 
     return RXCFilterResults(
         cp=cp,
