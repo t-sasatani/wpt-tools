@@ -5,7 +5,31 @@ Solvers for wpt-tools.
 from typing import Literal, Optional
 
 import numpy as np
-from wpt_tools.data_classes import RichNetwork, override_frange, EfficiencyResults
+from wpt_tools.data_classes import RichNetwork, override_frange, EfficiencyResults, LCRFittingResults
+from scipy.optimize import curve_fit
+import sklearn.metrics as metrics
+from wpt_tools.logger import WPTToolsLogger
+
+logger = WPTToolsLogger().get_logger(__name__)
+
+
+def series_lcr_xself(x, ls, cs):
+    """
+    Series LCR model for self reactance.
+    """
+    return 2 * np.pi * x * ls - 1 / (2 * np.pi * x * cs)
+
+def series_lcr_rself(x, r):
+    """
+    Series LCR model for self resistance.
+    """
+    return 0 * x + r
+
+def series_lcr_xm(x, lm):
+    """
+    Series LCR model for mutual reactance.
+    """
+    return 2 * np.pi * x * lm
 
 def efficiency_calculator(
     rich_nw: RichNetwork,
@@ -72,5 +96,130 @@ def efficiency_calculator(
                 results.max_eff_opt = float(eff_opt_temp)
                 results.max_r_opt = float(r_opt_temp)
                 results.max_x_opt = float(x_opt_temp)
+
+    return results
+
+def lcr_fitting(rich_nw: RichNetwork, target_f: Optional[float] = None, range_f: Optional[float] = None) -> LCRFittingResults:
+    """
+    Fit the LCR model to the network.
+    """
+    rich_nw = override_frange(rich_nw, target_f=target_f, range_f=range_f)
+    results = LCRFittingResults()
+
+    popt, _ = curve_fit(
+        series_lcr_xself,
+        rich_nw.nw.frequency.f[
+            rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
+        ],
+        rich_nw.nw.z[
+            rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop, 0, 0
+        ].imag,
+        p0=np.asarray([1e-6, 1e-9]),
+        maxfev=10000,
+    )
+    ls1, cs1 = popt
+    r2 = metrics.r2_score(
+        rich_nw.nw.z[
+            rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop, 0, 0
+        ].imag,
+        series_lcr_xself(
+            rich_nw.nw.frequency.f[
+                rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
+            ],
+            ls1,
+            cs1,
+        ),
+    )
+
+    logger.info("R2 for fitting Ls1, Cs1: %f" % (r2))
+
+    popt, _ = curve_fit(
+        series_lcr_rself,
+        rich_nw.nw.frequency.f[
+            rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
+        ],
+        rich_nw.nw.z[
+            rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop, 0, 0
+        ].real,
+        p0=np.asarray([1]),
+        maxfev=10000,
+    )
+    rs1 = popt
+
+    results.ls1 = ls1
+    results.cs1 = cs1
+    results.rs1 = rs1
+
+    if rich_nw.nw.nports == 2:
+        popt, _ = curve_fit(
+            series_lcr_xself,
+            rich_nw.nw.frequency.f[
+                rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
+            ],
+            rich_nw.nw.z[
+                rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop, 1, 1
+            ].imag,
+            p0=np.asarray([1e-6, 1e-9]),
+            maxfev=10000,
+        )
+        ls2, cs2 = popt
+
+        r2 = metrics.r2_score(
+            rich_nw.nw.z[
+                rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop, 1, 1
+            ].imag,
+            series_lcr_xself(
+                rich_nw.nw.frequency.f[
+                    rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
+                ],
+                ls2,
+                cs2,
+            ),
+        )
+        logger.info("R2 for fitting Ls2, Cs2: %f" % (r2))
+
+        popt, _ = curve_fit(
+            series_lcr_rself,
+            rich_nw.nw.frequency.f[
+                rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
+            ],
+            rich_nw.nw.z[
+                rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop, 1, 1
+            ].real,
+            p0=np.asarray([1]),
+            maxfev=10000,
+        )
+        rs2 = popt
+
+        results.ls2 = ls2
+        results.cs2 = cs2
+        results.rs2 = rs2
+
+        popt, _ = curve_fit(
+            series_lcr_xm,
+            rich_nw.nw.frequency.f[
+                rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
+            ],
+            rich_nw.nw.z[
+                rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop, 0, 1
+            ].imag,
+            p0=np.asarray([1e-6]),
+            maxfev=10000,
+        )
+        lm = popt
+        r2 = metrics.r2_score(
+            rich_nw.nw.z[
+                rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop, 0, 1
+            ].imag,
+            series_lcr_xm(
+                rich_nw.nw.frequency.f[
+                    rich_nw.f_narrow_index_start : rich_nw.f_narrow_index_stop
+                ],
+                lm,
+            ),
+        )
+        logger.info("R2 for fitting Lm: %f" % (r2))
+        results.lm = lm
+
 
     return results

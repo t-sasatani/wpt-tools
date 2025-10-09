@@ -39,6 +39,51 @@ class EfficiencyResults:
         self.max_r_opt = None
         self.max_x_opt = None
 
+class LCRFittingResults:
+    """
+    Results of LCR fitting.
+
+    Parameters
+    ----------
+    ls1: float
+        The inductance of the first series LCR.
+    cs1: float
+        The capacitance of the first series LCR.
+    rs1: float
+        The resistance of the first series LCR.
+    ls2: float
+        The inductance of the second series LCR.
+    cs2: float
+        The capacitance of the second series LCR.
+    rs2: float
+        The resistance of the second series LCR.
+    lm: float
+        The inductance of the mutual coupling.
+    km: float
+        The mutual coupling coefficient.
+
+    """
+
+    ls1: float
+    cs1: float
+    rs1: float
+    ls2: float
+    cs2: float
+    rs2: float
+    lm: float
+
+    def __init__(self):
+        """
+        Initialize the results.
+        """
+        self.ls1 = None
+        self.cs1 = None
+        self.rs1 = None
+        self.ls2 = None
+        self.cs2 = None
+        self.rs2 = None
+        self.lm = None
+
 @dataclasses.dataclass
 class RichNetwork:
     """

@@ -10,7 +10,8 @@ if __name__ == "__main__":
 
     results = nw_tools.analyze_efficiency(
         rich_nw=example_nw,
-        show_plot=True,
+        show_plot=False,
+        show_data=True,
         rx_port=1
         )
 
@@ -18,7 +19,9 @@ if __name__ == "__main__":
     target_f = 6.78e6
     range_f = 1e6
 
-    ls1, cs1, rs1, ls2, cs2, rs2, lm = nw_tools.fit_z_narrow(
+    results = nw_tools.fit_z_narrow(
         rich_nw=example_nw,
         show_plot=True,
+        target_f=target_f,
+        range_f=range_f
     )
