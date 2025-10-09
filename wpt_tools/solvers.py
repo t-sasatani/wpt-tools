@@ -351,7 +351,7 @@ def lcr_fitting(
             ),
         )
         if r2 < r2_threshold:
-            logger.warning(f"R2 for fitting Ls2, Cs2 is {ls2.r2}")
+            logger.warning(f"R2 for fitting Ls2, Cs2 is {r2}")
         popt, _ = curve_fit(
             series_lcr_rself,
             rich_nw.nw.frequency.f[
