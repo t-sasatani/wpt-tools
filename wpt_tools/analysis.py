@@ -168,10 +168,11 @@ class nw_tools:
             fig.tight_layout()
 
         if show_data is True:
-            logger.info("Target frequency: %.3e" % (max_f_plot))
-            logger.info("Maximum efficiency: %.2f" % (max_eff_opt))
-            logger.info("Optimum Re(Zload): %.2f" % (max_r_opt))
-            logger.info("Optimum Im(Zload): %.2f" % (max_x_opt))
+            print("----Analysis results----")
+            print("Target frequency: %.3e" % (max_f_plot))
+            print("Maximum efficiency: %.2f" % (max_eff_opt))
+            print("Optimum Re(Zload): %.2f" % (max_r_opt))
+            print("Optimum Im(Zload): %.2f" % (max_x_opt))
 
         return max_f_plot, max_eff_opt, max_r_opt, max_x_opt
 
@@ -293,7 +294,7 @@ class nw_tools:
             ),
         )
         if show_fit is True:
-            logger.info("R2 for fitting Ls1, Cs1: %f" % (r2))
+            print("R2 for fitting Ls1, Cs1: %f" % (r2))
 
         popt, _ = curve_fit(
             series_lcr_rself,
@@ -335,7 +336,7 @@ class nw_tools:
                 ),
             )
             if show_fit == 1:
-                logger.info("R2 for fitting Ls2, Cs2: %f" % (r2))
+                print("R2 for fitting Ls2, Cs2: %f" % (r2))
 
             popt, _ = curve_fit(
                 series_lcr_rself,
@@ -373,11 +374,10 @@ class nw_tools:
                     lm,
                 ),
             )
-            # logger.info('R2 for fitting Lm: %f' % (r2))
+            print('R2 for fitting Lm: %f' % (r2))
 
         if show_fit == 1:
-            logger.info("Self impedance at target frequency\n")
-            logger.info(
+            print(
                 "Re(Z11): %.2e\nIm(Z11): %.2e\n"
                 % (
                     rich_nw.nw.z[rich_nw.target_f_index, 0, 0].real,
@@ -386,7 +386,7 @@ class nw_tools:
             )
 
             if rich_nw.nw.nports == 2:
-                logger.info(
+                print(
                     "Re(Z22): %.2e\nIm(Z22) %.2e\n"
                     % (
                         rich_nw.nw.z[rich_nw.target_f_index, 1, 1].real,
@@ -394,31 +394,15 @@ class nw_tools:
                     )
                 )
 
-            logger.info("Fitting values assuming a pair of series LCR resonators\n")
-            logger.info(
-                "Ls1: %.2e, Cs1: %.2e, Rs1: %.2e, f_1: %.3e, Q_1 (approximate, @%.3e Hz): %.2e"
-                % (
-                    ls1,
-                    cs1,
-                    rs1,
-                    1 / (2 * np.pi * np.sqrt(ls1 * cs1)),
-                    rich_nw.target_f,
-                    2 * np.pi * rich_nw.target_f * ls1 / rs1,
-                )
+            logger.debug("Fitting values assuming a pair of series LCR resonators\n")
+            print(
+                f"Ls1: {ls1}, Cs1: {cs1}, Rs1: {rs1}, f_1: {1 / (2 * np.pi * np.sqrt(ls1 * cs1))}, Q_1 (approximate, @{rich_nw.target_f} Hz): {(2 * np.pi * rich_nw.target_f * ls1 / rs1)[0]}"
             )
             if rich_nw.nw.nports == 2:
-                logger.info(
-                    "Ls2: %.2e, Cs2: %.2e, Rs2: %.2e, f_2: %.3e, Q_2 (approximate, @%.3e Hz): %.2e"
-                    % (
-                        ls2,
-                        cs2,
-                        rs2,
-                        1 / (2 * np.pi * np.sqrt(ls2 * cs2)),
-                        rich_nw.target_f,
-                        2 * np.pi * rich_nw.target_f * ls2 / rs2,
-                    )
+                print(
+                    f"Ls2: {ls2}, Cs2: {cs2}, Rs2: {rs2}, f_2: {1 / (2 * np.pi * np.sqrt(ls2 * cs2))}, Q_2 (approximate, @{rich_nw.target_f} Hz): {(2 * np.pi * rich_nw.target_f * ls2 / rs2)[0]}"
                 )
-                logger.info("Lm: %.2e, km: %.3f" % (lm, lm / np.sqrt(ls1 * ls2)))
+                print(f"Lm: {lm}, km: {lm / np.sqrt(ls1 * ls2)}")
 
         if show_plot == 1:
             if rich_nw.nw.nports == 1:
@@ -693,11 +677,12 @@ class nw_tools:
         else:
             raise ValueError("set rx_port parameter to 1 or 2")
 
-        logger.info("Target frequency: %.3e" % (max_f_plot))
-        logger.info("Maximum efficiency: %.2f" % (max_eff_opt))
-        logger.info("Receiver inductance: %.2e" % (lrx))
-        logger.info("Optimum load: %.2f" % (max_r_opt))
-        logger.info("Target Rload: %.2f\n" % (rload))
+        print("-----------Analysis results-----------")
+        print("Target frequency: %.3e" % (max_f_plot))
+        print("Maximum efficiency: %.2f" % (max_eff_opt))
+        print("Receiver inductance: %.2e" % (lrx))
+        print("Optimum load: %.2f" % (max_r_opt))
+        print("Target Rload: %.2f\n" % (rload))
 
         if c_network == "CpCsRl":
 
