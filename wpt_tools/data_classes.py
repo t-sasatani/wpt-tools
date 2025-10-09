@@ -134,13 +134,13 @@ class LCRFittingResults:
         """
         Initialize the results.
         """
-        self.ls1 = ValR2
-        self.cs1 = ValR2
-        self.rs1 = ValR2
-        self.ls2 = ValR2
-        self.cs2 = ValR2
-        self.rs2 = ValR2
-        self.lm = ValR2
+        self.ls1 = ValR2(None, None)
+        self.cs1 = ValR2(None, None)
+        self.rs1 = ValR2(None, None)
+        self.ls2 = ValR2(None, None)
+        self.cs2 = ValR2(None, None)
+        self.rs2 = ValR2(None, None)
+        self.lm = ValR2(None, None)
         # Context for printing without external inputs
         self._target_f: Optional[float] = None
         self._nports: Optional[int] = None
