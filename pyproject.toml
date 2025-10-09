@@ -3,7 +3,7 @@ name = "wpt_tools"
 dynamic = ["version"]
 description = "Python package for analyzing wireless power systems"
 authors = [{ name = "t-sasatani", email = "sasatani.dev@gmail.com" }]
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<3.14"
 readme = "README.md"
 license = "AGPL-3.0"
 dependencies = [
@@ -19,6 +19,10 @@ dependencies = [
     "pytest>=8.2.2,<9",
     "pytest-cov>=6.1.0,<7",
     "ipykernel>=6.29.5",
+    "numpydantic>=1.6.11",
+    "dotenv>=0.9.9",
+    "coloredlogs>=15.0.1",
+    "tabulate>=0.9.0",
 ]
 
 [project.optional-dependencies]

@@ -2,14 +2,14 @@
 .PHONY: check format test test-cov test-fast test-debug clean docs
 
 check:
-	uv run ruff check wpt_tools
-	uv run isort --check-only wpt_tools
-	uv run black --check wpt_tools
+	uv run ruff check wpt_tools tests
+	uv run isort --check-only wpt_tools tests
+	uv run black --check wpt_tools tests
 
 format:
-	uv run ruff check --fix wpt_tools
-	uv run isort wpt_tools
-	uv run black wpt_tools
+	uv run ruff check --fix wpt_tools tests
+	uv run isort wpt_tools tests
+	uv run black wpt_tools tests
 
 test:
 	uv run pytest tests/
