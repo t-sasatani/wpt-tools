@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11, <3.14"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -1925,6 +1925,7 @@ wheels = [
 name = "wpt-tools"
 source = { editable = "." }
 dependencies = [
+    { name = "click" },
     { name = "coloredlogs" },
     { name = "colorlog" },
     { name = "dotenv" },
@@ -1957,6 +1958,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "black", extras = ["jupyter"], marker = "extra == 'dev'", specifier = ">=25.1.0,<26" },
+    { name = "click", specifier = ">=8.1.0,<9" },
     { name = "coloredlogs", specifier = ">=15.0.1" },
     { name = "colorlog", specifier = ">=6.8.2,<7" },
     { name = "dotenv", specifier = ">=0.9.9" },
