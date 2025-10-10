@@ -7,7 +7,7 @@ on:
 permissions:
   contents: write
 
-# Avoid two runs pushing to the same branch at once
+# avoid two runs pushing to the same branch simultaneously
 concurrency:
   group: coverage-data
   cancel-in-progress: false
@@ -29,7 +29,7 @@ jobs:
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"   # make `uv` available
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Install dependencies
         run: uv sync --extra dev
@@ -50,26 +50,36 @@ jobs:
           junitxml-path: ./pytest.xml
           hide-comment: true
 
-      - name: Write YAML
+      # Prepare a separate worktree for the coverage-data branch
+      - name: Prepare coverage-data worktree
         run: |
-          mkdir -p coverage
-          # Safer than heredoc; no YAML indentation pitfalls
+          set -e
+          # fetch remote branch if it exists
+          git fetch origin coverage-data:coverage-data || true
+          # create a clean directory for the worktree
+          rm -rf coverage-wt
+          # add worktree; if branch exists locally use it, otherwise create from current HEAD
+          if git show-ref --verify --quiet refs/heads/coverage-data; then
+            git worktree add coverage-wt coverage-data
+          else
+            git worktree add -b coverage-data coverage-wt
+          fi
+
+      - name: Write YAML into worktree
+        run: |
+          mkdir -p coverage-wt/coverage
           printf 'coverage:\n  percent: %s\n  color: %s\n' \
             '${{ steps.cov.outputs.coverage }}' \
-            '${{ steps.cov.outputs.color }}' > coverage/summary.yml
-          cat coverage/summary.yml
+            '${{ steps.cov.outputs.color }}' > coverage-wt/coverage/summary.yml
+          echo "----- coverage-wt/coverage/summary.yml -----"
+          cat coverage-wt/coverage/summary.yml
 
-      # Ensure we have the remote branch locally so the push is a fast-forward
-      - name: Sync remote coverage-data branch (if exists)
-        run: |
-          git fetch origin coverage-data:coverage-data || echo "No remote coverage-data branch yet"
-
-      # Commit/push the YAML to the coverage-data branch
-      - name: Commit to coverage-data branch (no PR)
+      - name: Commit to coverage-data (no PR)
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: update coverage data"
+          repository: coverage-wt          # commit/push from the worktree
           file_pattern: coverage/summary.yml
-          branch: coverage-data
-          # No create_branch here—action will create it automatically if missing
+          commit_message: "chore: update coverage data"
+          # no 'branch:' needed because we're already on coverage-data in the worktree
+          # optional: protect against rare races; turn off if you don't need it
           push_options: --force-with-lease
