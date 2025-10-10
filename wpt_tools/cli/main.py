@@ -1,6 +1,7 @@
 """CLI entry point for wpt-tools."""
 
 import click
+
 from wpt_tools.workflow import demo_workflow
 
 
@@ -12,7 +13,9 @@ def cli():
 
 
 @cli.command()
-@click.option("--show-plots", is_flag=True, default=False, help="Show interactive plots")
+@click.option(
+    "--show-plots", is_flag=True, default=False, help="Show interactive plots"
+)
 def demo(show_plots: bool):
     """Run the wireless power tools demo with sample data."""
     click.echo("Running wireless power tools demo...")

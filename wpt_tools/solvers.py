@@ -208,8 +208,7 @@ def compute_rxc_filter(
         if c_network == "CpCsRl":
             cp, cs = params
             return (
-                1
-                / ((1j * max_w_plot * cp) + 1 / ((1 / (1j * max_w_plot * cs) + rload)))
+                1 / ((1j * max_w_plot * cp) + 1 / (1 / (1j * max_w_plot * cs) + rload))
                 + 1j * max_w_plot * lrx
             )
         raise NotImplementedError(f"Unsupported c_network: {c_network}")
