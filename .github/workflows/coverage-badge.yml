@@ -1,39 +1,43 @@
-name: Update Coverage Badge
+name: Update coverage data
 on:
-  workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main]   # run only when main is updated
 
 permissions:
   contents: write
 
 jobs:
-  update-badge:
+  cov:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
 
       - name: Run tests
         run: |
-          pytest --junitxml=pytest.xml --cov-report=term-missing --cov=src tests/ | tee pytest-coverage.txt
+          pytest --junitxml=pytest.xml --cov=src --cov-report=term-missing tests/ | tee pytest-coverage.txt
 
-      - name: Coverage comment
-        id: coverage
+      - name: Parse coverage
+        id: cov
         uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
           hide-comment: true
 
-      - name: Update README
+      - name: Write YAML
         run: |
-          sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n${{ steps.coverage.outputs.coverageHtml }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
+          mkdir -p coverage
+          cat > coverage/summary.yml <<EOF
+          coverage:
+            percent: ${{ steps.cov.outputs.coverage }}
+            color: ${{ steps.cov.outputs.color }}
+          EOF
 
-      - name: Commit changes
+      - name: Commit to coverage-data branch (no PR)
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'docs: update coverage badge'
-          file_pattern: README.md
+          commit_message: chore: update coverage data
+          file_pattern: coverage/summary.yml
+          branch: coverage-data
+          create_branch: true
