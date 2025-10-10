@@ -37,7 +37,7 @@ jobs:
       - name: Commit to coverage-data branch (no PR)
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: chore: update coverage data
+          commit_message: "chore: update coverage data"
           file_pattern: coverage/summary.yml
           branch: coverage-data
           create_branch: true
