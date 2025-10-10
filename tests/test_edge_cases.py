@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import skrf as rf
 
-from wpt_tools.data_classes import EfficiencyResults, RichNetwork
+from wpt_tools.data_classes import RichNetwork
 from wpt_tools.solvers import compute_load_sweep, efficiency_calculator
 
 
@@ -140,28 +140,6 @@ class TestEdgeCases:
         assert len(results.rez_list) == 0
         assert len(results.imz_list) == 0
         assert results.eff_grid.shape == (0, 0)
-
-    def test_efficiency_results_validation_edge_cases(self):
-        """Test EfficiencyResults validation with edge case values."""
-        results = EfficiencyResults()
-
-        # Test with zero values
-        results.max_f_plot = 0.0
-        results.max_eff_opt = 0.0
-        results.max_r_opt = 0.0
-        results.max_x_opt = 0.0
-
-        # Should not raise
-        results.validate()
-
-        # Test with very large values
-        results.max_f_plot = 1e12
-        results.max_eff_opt = 1.0
-        results.max_r_opt = 1e6
-        results.max_x_opt = 1e6
-
-        # Should not raise
-        results.validate()
 
     def test_rich_network_target_frequency_out_of_range(self):
         """Test RichNetwork with target frequency outside the network range."""

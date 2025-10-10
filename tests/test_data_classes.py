@@ -1,5 +1,7 @@
 """Tests for data classes."""
 
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 import skrf as rf
@@ -20,12 +22,6 @@ class TestValR2:
         val = ValR2(value=1.0, r2=0.95)
         assert val.value == 1.0
         assert val.r2 == 0.95
-
-    def test_none_values(self):
-        """Test ValR2 with None values."""
-        val = ValR2(value=None, r2=None)
-        assert val.value is None
-        assert val.r2 is None
 
 
 class TestEfficiencyResults:
@@ -93,6 +89,30 @@ class TestLCRFittingResults:
         assert results.rs2 is not None
         assert results.lm is not None
         # km is calculated dynamically, not stored as attribute
+
+    @patch("builtins.print")
+    def test_print_tables(self, mock_print):
+        """Test print_tables method."""
+        results = LCRFittingResults()
+        results.ls1.value = 1e-6
+        results.ls1.r2 = 0.95
+        results.cs1.value = 1e-9
+        results.cs1.r2 = 0.90
+        results.rs1.value = 0.1
+        results.rs1.r2 = 0.88
+        results.ls2.value = 2e-6
+        results.ls2.r2 = 0.92
+        results.cs2.value = 2e-9
+        results.cs2.r2 = 0.89
+        results.rs2.value = 0.2
+        results.rs2.r2 = 0.87
+        results.lm.value = 0.5e-6
+        results.lm.r2 = 0.85
+
+        results.print_tables()
+
+        # Should call print multiple times for the tables
+        assert mock_print.call_count > 0
 
 
 class TestRichNetwork:

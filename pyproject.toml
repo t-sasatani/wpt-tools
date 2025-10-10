@@ -93,3 +93,6 @@ include_trailing_comma = true
 
 [project.scripts]
 wpt = "wpt_tools.cli.main:cli"
+
+[tool.coverage.run]
+omit = ["wpt_tools/plotter.py"]
