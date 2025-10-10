@@ -109,7 +109,6 @@ class WPTToolsLogger:
         if not any(
             isinstance(handler, logging.StreamHandler) for handler in logger.handlers
         ):
-
             console_handler = logging.StreamHandler()
             console_handler.setLevel(self.console_level)
             console_handler.setFormatter(logging.Formatter(self.fmt))

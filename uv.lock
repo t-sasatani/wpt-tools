@@ -1972,6 +1972,13 @@ dev = [
     { name = "sphinx-click" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "myst-parser" },
+    { name = "sphinx" },
+    { name = "sphinx-click" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "black", extras = ["jupyter"], marker = "extra == 'dev'", specifier = ">=25.1.0,<26" },
@@ -2003,3 +2010,10 @@ requires-dist = [
     { name = "toml", specifier = ">=0.10.2,<0.11" },
 ]
 provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "myst-parser", specifier = ">=4.0.1" },
+    { name = "sphinx", specifier = ">=8.2.3" },
+    { name = "sphinx-click", specifier = ">=5.2.1" },
+]
