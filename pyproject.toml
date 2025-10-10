@@ -61,6 +61,13 @@ raw-options = { version_scheme = "post-release", local_scheme = "no-local-versio
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
+[dependency-groups]
+dev = [
+    "myst-parser>=4.0.1",
+    "sphinx>=8.2.3",
+    "sphinx-click>=5.2.1",
+]
+
 [tool.black]
 line-length = 88
 

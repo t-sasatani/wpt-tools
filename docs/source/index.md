@@ -31,6 +31,7 @@ wpt demo
 installation
 usage
 cli
+testing
 changelog
 ```
 
