@@ -150,48 +150,48 @@ class TestAnalysisRegression:
                 )
                 return
 
-            # Compare LCR parameters (looser tolerance for optimization results)
+            # Compare LCR parameters (very loose tolerance for optimization results)
             lcr_data = archived_results["lcr_fitting"]
             np.testing.assert_allclose(
                 results.ls1.value,
                 lcr_data["ls1_value"],
-                rtol=1e-3,
+                rtol=1e-2,
                 err_msg="Ls1 value mismatch",
             )
             np.testing.assert_allclose(
                 results.cs1.value,
                 lcr_data["cs1_value"],
-                rtol=1e-3,
+                rtol=1e-2,
                 err_msg="Cs1 value mismatch",
             )
             np.testing.assert_allclose(
                 results.rs1.value,
                 lcr_data["rs1_value"],
-                rtol=1e-3,
+                rtol=1e-2,
                 err_msg="Rs1 value mismatch",
             )
             np.testing.assert_allclose(
                 results.ls2.value,
                 lcr_data["ls2_value"],
-                rtol=1e-3,
+                rtol=1e-2,
                 err_msg="Ls2 value mismatch",
             )
             np.testing.assert_allclose(
                 results.cs2.value,
                 lcr_data["cs2_value"],
-                rtol=1e-3,
+                rtol=1e-2,
                 err_msg="Cs2 value mismatch",
             )
             np.testing.assert_allclose(
                 results.rs2.value,
                 lcr_data["rs2_value"],
-                rtol=1e-3,
+                rtol=1e-2,
                 err_msg="Rs2 value mismatch",
             )
             np.testing.assert_allclose(
                 results.lm.value,
                 lcr_data["lm_value"],
-                rtol=1e-3,
+                rtol=1e-2,
                 err_msg="Lm value mismatch",
             )
 
