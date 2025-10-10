@@ -25,3 +25,21 @@ LCR fitting tests are `@pytest.mark.xfail` on Windows due to numerical precision
 ## Archive System
 
 Tests use binary pickle archives (`tests/data/analysis_regression_results.pkl`) for precise numerical comparison with automatic creation and updates.
+
+## Coverage Reports
+
+### Excluded Files
+
+Files excluded from coverage analysis are listed in `pyproject.toml`:
+
+```toml
+[tool.coverage.run]
+omit = ["wpt_tools/plotter.py"]
+```
+
+### Viewing Coverage
+
+- **Terminal**: `uv run pytest tests/ --cov=wpt_tools --cov-report=term-missing`
+- **Direct**: `uv run coverage report --show-missing`
+
+Excluded files are not shown in coverage reports.

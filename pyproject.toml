@@ -103,3 +103,20 @@ wpt = "wpt_tools.cli.main:cli"
 
 [tool.coverage.run]
 omit = ["wpt_tools/plotter.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+skip_empty = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
