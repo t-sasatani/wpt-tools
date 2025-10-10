@@ -10,12 +10,23 @@ jobs:
   cov:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Run tests
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Generate Coverage Report
         run: |
-          pytest --junitxml=pytest.xml --cov=src --cov-report=term-missing tests/ | tee pytest-coverage.txt
+          uv run pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=wpt_tools tests/ | tee pytest-coverage.txt
 
       - name: Parse coverage
         id: cov
