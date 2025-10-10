@@ -5,7 +5,20 @@ description = "Python package for analyzing wireless power systems"
 authors = [{ name = "t-sasatani", email = "sasatani.dev@gmail.com" }]
 requires-python = ">=3.11,<3.14"
 readme = "README.md"
-license = "AGPL-3.0"
+license = { text = "AGPL-3.0" }
+keywords = ["wireless", "power", "transfer", "rf", "s-parameters", "analysis"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
 dependencies = [
     "numpy>=2.0.0,<3",
     "matplotlib>=3.10.3,<4",
@@ -32,6 +45,7 @@ dev = [
     "sphinx>=8.2.3,<8.3",
     "myst-parser>=4.0.1,<5",
     "sphinx-book-theme>=1.1.4",
+    "sphinx-click>=5.0.0,<6",
     "black[jupyter]>=25.1.0,<26",
     "isort>=6.0.1,<7",
     "ruff>=0.11.6,<0.12",

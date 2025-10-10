@@ -1703,6 +1703,20 @@ wheels = [
 ]
 
 [[package]]
+name = "sphinx-click"
+version = "5.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "docutils" },
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fd/6e/6560383fcf22b9d4964c4a3adf503f05ba77d2f426e33b25403e66f33b79/sphinx_click-5.2.1.tar.gz", hash = "sha256:a669773f76db05a3e04c163da91cd5e7db1a4761a6ea9eb074404a393094cde7", size = 29183, upload-time = "2024-05-14T12:55:09.372Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/b6/db3f5598ea158f222a3255e5b7d7d4f94f4c870d5350121f386bdde7453f/sphinx_click-5.2.1-py3-none-any.whl", hash = "sha256:7aaa97bdce6fe315b3e719c085cd566e75470cbd91f1f6998b91213a09b8e7ec", size = 9938, upload-time = "2024-05-14T12:55:08.076Z" },
+]
+
+[[package]]
 name = "sphinxcontrib-applehelp"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1955,6 +1969,7 @@ dev = [
     { name = "ruff" },
     { name = "sphinx" },
     { name = "sphinx-book-theme" },
+    { name = "sphinx-click" },
 ]
 
 [package.metadata]
@@ -1983,6 +1998,7 @@ requires-dist = [
     { name = "scipy", specifier = "~=1.15.3" },
     { name = "sphinx", marker = "extra == 'dev'", specifier = ">=8.2.3,<8.3" },
     { name = "sphinx-book-theme", marker = "extra == 'dev'", specifier = ">=1.1.4" },
+    { name = "sphinx-click", marker = "extra == 'dev'", specifier = ">=5.0.0,<6" },
     { name = "tabulate", specifier = ">=0.9.0" },
     { name = "toml", specifier = ">=0.10.2,<0.11" },
 ]
