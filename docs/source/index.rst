@@ -35,8 +35,9 @@ Guide
 
    installation
    usage
+   cli
 
-API (coming soon)
+API
 --------------------
 
 .. toctree::
