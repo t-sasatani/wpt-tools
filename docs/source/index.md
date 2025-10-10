@@ -1,7 +1,7 @@
 # wpt_tools -- {release}
 
 ```{important}
-Please note that this project is in its very early development stages and is not guaranteed to work. This documentation will be populated soon.
+⚠️ **Alpha Software** - This project is in active development. Features and APIs may change without notice.
 ```
 
 ## Quickstart
@@ -12,14 +12,16 @@ Please note that this project is in its very early development stages and is not
 pip install wpt_tools
 ```
 
-2. Refer to the following Jupyter notebook for an example of how to use the package:
+2. Run the demo:
 
-- [measurement_sample.ipynb](https://github.com/t-sasatani/wpt-tools/blob/main/examples/measurement_sample.ipynb)
+```bash
+wpt demo
+```
 
 ## Resources
 
 - GitHub: https://github.com/t-sasatani/wpt-tools
-- Readthedocs: https://wpt-tools.readthedocs.io/en/latest/
+- PyPI: https://pypi.org/project/wpt-tools/
 
 ## Guide
 

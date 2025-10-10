@@ -1,6 +1,4 @@
-"""
-Example script for using wpt-tools.
-"""
+"""Workflow definitions for wpt-tools."""
 
 from pathlib import Path
 from contextlib import chdir
@@ -9,17 +7,29 @@ from wpt_tools.data_classes import RichNetwork
 from wpt_tools.analysis import MinMax, nw_tools
 from wpt_tools.plotter import plot_impedance
 
-if __name__ == "__main__":
-    script_dir = Path(__file__).resolve().parent
-    with chdir(script_dir):
+
+def demo_workflow(show_plot: bool = False) -> None:
+    """
+    Run the wireless power tools demo workflow.
+    
+    Parameters
+    ----------
+    show_plot : bool
+        Whether to show interactive plots (default: False)
+    """
+    # Get the path to the example assets
+    examples_dir = Path(__file__).parent.parent / "examples"
+    
+    with chdir(examples_dir):
         example_nw = RichNetwork.from_touchstone("./assets/sample.s2p")
         example_nw.set_f_target_range(target_f=6.78e6, range_f=1e6)
 
         # Full-range impedance plot (ESC to close)
-        plot_impedance(example_nw, results=None, full_range=True, target_f=6.78e6)
+        if show_plot:
+            plot_impedance(example_nw, results=None, full_range=True, target_f=6.78e6)
 
         results = nw_tools.analyze_efficiency(
-            rich_nw=example_nw, show_plot=True, show_data=True, rx_port=1
+            rich_nw=example_nw, show_plot=show_plot, show_data=True, rx_port=1
         )
 
         # For maximum efficiency analysis
@@ -27,7 +37,7 @@ if __name__ == "__main__":
         range_f = 1e6
 
         results = nw_tools.fit_z_narrow(
-            rich_nw=example_nw, show_plot=True, target_f=target_f, range_f=range_f
+            rich_nw=example_nw, show_plot=show_plot, target_f=target_f, range_f=range_f
         )
 
         # Load sweep (returns model; also plots by default, ESC to close)
@@ -42,7 +52,7 @@ if __name__ == "__main__":
 
         nw_tools.calc_rxc_filter(
             rich_nw=example_nw,
-            rx_port = 1,
-            rload = 100,
-            c_network = 'CpCsRl'
+            rx_port=1,
+            rload=100,
+            c_network='CpCsRl'
         )
