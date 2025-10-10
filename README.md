@@ -1,7 +1,7 @@
 # Wireless Power Tools
 
 [![CI](https://github.com/t-sasatani/wpt-tools/actions/workflows/format.yml/badge.svg)](https://github.com/t-sasatani/wpt-tools/actions/workflows/format.yml)
-![coverage](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Ft-sasatani%2Fwpt-tools%2Fcoverage-data%2Fcoverage%2Fsummary.yml&query=%24.coverage.percent&suffix=%25&label=coverage)
+![coverage](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Ft-sasatani%2Fwpt-tools%2Fcoverage-data%2Fcoverage%2Fsummary.yml&query=%24.coverage.percent&label=coverage)
 [![PyPI version](https://badge.fury.io/py/wpt-tools.svg)](https://badge.fury.io/py/wpt-tools)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
