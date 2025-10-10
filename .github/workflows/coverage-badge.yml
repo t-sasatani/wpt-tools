@@ -7,7 +7,7 @@ on:
 permissions:
   contents: write
 
-# avoid two runs pushing to the same branch simultaneously
+# Prevent parallel runs from racing on the same target branch
 concurrency:
   group: coverage-data
   cancel-in-progress: false
@@ -29,7 +29,7 @@ jobs:
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"   # ensure `uv` is on PATH
 
       - name: Install dependencies
         run: uv sync --extra dev
@@ -50,15 +50,12 @@ jobs:
           junitxml-path: ./pytest.xml
           hide-comment: true
 
-      # Prepare a separate worktree for the coverage-data branch
+      # Prepare an isolated worktree for the coverage-data branch
       - name: Prepare coverage-data worktree
         run: |
           set -e
-          # fetch remote branch if it exists
           git fetch origin coverage-data:coverage-data || true
-          # create a clean directory for the worktree
           rm -rf coverage-wt
-          # add worktree; if branch exists locally use it, otherwise create from current HEAD
           if git show-ref --verify --quiet refs/heads/coverage-data; then
             git worktree add coverage-wt coverage-data
           else
@@ -74,12 +71,25 @@ jobs:
           echo "----- coverage-wt/coverage/summary.yml -----"
           cat coverage-wt/coverage/summary.yml
 
-      - name: Commit to coverage-data (no PR)
+      # Only commit if the file actually changed (cleaner history)
+      - name: Check if YAML changed
+        id: changed
+        run: |
+          set -e
+          cd coverage-wt
+          git add -N coverage/summary.yml || true
+          if git diff --quiet -- coverage/summary.yml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit to coverage-data
+        if: steps.changed.outputs.changed == 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          repository: coverage-wt          # commit/push from the worktree
+          repository: coverage-wt
           file_pattern: coverage/summary.yml
           commit_message: "chore: update coverage data"
-          # no 'branch:' needed because we're already on coverage-data in the worktree
-          # optional: protect against rare races; turn off if you don't need it
-          push_options: --force-with-lease
+          branch: coverage-data            # explicitly push to this branch
+          # push_options: --force-with-lease  # optional; enable only if you still see races
