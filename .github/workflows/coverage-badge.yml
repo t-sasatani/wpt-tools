@@ -1,5 +1,6 @@
 name: Update Coverage Badge
 on:
+  workflow_dispatch:
   push:
     branches: [main]
 
