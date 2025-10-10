@@ -1,4 +1,4 @@
-name: Run and display pytest
+name: Pytest with multiple Python versions
 
 on:
   push:

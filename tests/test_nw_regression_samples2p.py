@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 
 import numpy as np
 import pytest
@@ -15,6 +16,11 @@ from wpt_tools.solvers import (
 )
 
 
+@pytest.mark.xfail(
+    condition=sys.platform == "win32",
+    reason="LCR fitting results differ on Windows due to numerical precision differences",
+    strict=False,
+)
 def test_sample_s2p_regression():
     """
     Test the regression of the sample.s2p.

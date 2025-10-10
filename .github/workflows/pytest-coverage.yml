@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev
 
-      - name: Run tests with coverage
+      - name: Generate Coverage Report
         run: |
           uv run pytest --junitxml=pytest.xml --cov-report=term-missing --cov=wpt_tools tests/ | tee pytest-coverage.txt
 
