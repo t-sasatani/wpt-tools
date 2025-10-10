@@ -29,6 +29,9 @@ extensions = [
     'sphinx_click',
 ]
 
+# MyST parser configuration
+myst_parser = True
+
 templates_path = ['_templates']
 exclude_patterns = []
 
@@ -65,3 +68,19 @@ intersphinx_mapping = {
 
 # -- Options for todo extension ------------------------------------------
 todo_include_todos = True
+
+# -- Options for MyST parser --------------------------------------------
+myst_enable_extensions = [
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "html_admonition",
+    "html_image",
+    "replacements",
+    "smartquotes",
+    "substitution",
+    "tasklist",
+]
+
+# Allow .md files to be included, prioritize Markdown
+source_suffix = ['.md', '.rst']
