@@ -96,7 +96,7 @@ class TestAnalysisRegression:
     )
     def test_fit_z_narrow_regression(self):
         """Test LCR fitting against archived results."""
-        from wpt_tools.solvers import lcr_fitting
+        from wpt_tools.solver import lcr_fitting
 
         # Test wrapper parity: fit_z_narrow vs lcr_fitting
         results_wrapper = nw_tools.fit_z_narrow(
@@ -258,7 +258,7 @@ class TestAnalysisRegression:
 
     def test_calc_rxc_filter_regression(self):
         """Test RXC filter calculation against archived results."""
-        from wpt_tools.solvers import compute_rxc_filter
+        from wpt_tools.solver import compute_rxc_filter
 
         # Test wrapper parity: calc_rxc_filter vs compute_rxc_filter
         # calc_rxc_filter doesn't return results, it just prints them

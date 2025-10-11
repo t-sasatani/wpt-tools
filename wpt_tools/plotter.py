@@ -14,7 +14,7 @@ from wpt_tools.data_classes import (
     RichNetwork,
 )
 from wpt_tools.logger import WPTToolsLogger
-from wpt_tools.solvers import series_lcr_xm, series_lcr_xself
+from wpt_tools.solver import series_lcr_xm, series_lcr_xself
 
 logger = WPTToolsLogger().get_logger(__name__)
 

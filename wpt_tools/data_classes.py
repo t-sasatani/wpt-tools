@@ -145,7 +145,7 @@ class LCRFittingResults:
         self._target_f: Optional[float] = None
         self._nports: Optional[int] = None
 
-    def print_tables(self) -> None:
+    def print_table(self) -> None:
         """Print port-1, port-2 (if present), and mutual tables separately."""
         self.validate()
         target_f = self._target_f

@@ -1,5 +1,7 @@
-import sys
+"""Sphinx configuration for wpt-tools documentation."""
+
 import os
+import sys
 
 sys.path.append(os.path.abspath(".."))
 
