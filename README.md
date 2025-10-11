@@ -1,5 +1,8 @@
 # Wireless Power Tools
 
+⚠️ **Alpha Software** - This project is in active development. Features and APIs may change without notice.
+
+[![Status](https://img.shields.io/badge/status-alpha-orange)](https://github.com/t-sasatani/wpt-tools)
 [![CI](https://github.com/t-sasatani/wpt-tools/actions/workflows/format.yml/badge.svg)](https://github.com/t-sasatani/wpt-tools/actions/workflows/format.yml)
 ![coverage](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Ft-sasatani%2Fwpt-tools%2Fcoverage-data%2Fcoverage%2Fsummary.yml&query=%24.coverage.percent&label=coverage)
 [![PyPI version](https://badge.fury.io/py/wpt-tools.svg)](https://badge.fury.io/py/wpt-tools)
@@ -32,4 +35,5 @@ wpt demo
 
 ## Documentation
 
-Full documentation available at: [https://t-sasatani.github.io/wpt-tools/](https://t-sasatani.github.io/wpt-tools/)
+- **Full documentation**: [https://wpt-tools.readthedocs.io/](https://wpt-tools.readthedocs.io/)
+- **PyPI package**: [https://pypi.org/project/wpt-tools/](https://pypi.org/project/wpt-tools/)

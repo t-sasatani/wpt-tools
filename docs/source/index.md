@@ -9,7 +9,7 @@
 1. Install the package via pip:
 
 ```bash
-pip install wpt_tools
+pip install wpt-tools
 ```
 
 2. Run the demo:
@@ -20,8 +20,9 @@ wpt demo
 
 ## Resources
 
-- GitHub: https://github.com/t-sasatani/wpt-tools
-- PyPI: https://pypi.org/project/wpt-tools/
+- **GitHub**: [https://github.com/t-sasatani/wpt-tools](https://github.com/t-sasatani/wpt-tools)
+- **PyPI**: [https://pypi.org/project/wpt-tools/](https://pypi.org/project/wpt-tools/)
+- **Documentation**: [https://wpt-tools.readthedocs.io/](https://wpt-tools.readthedocs.io/)
 
 ## Guide
 
@@ -42,6 +43,7 @@ changelog
 
 analysis
 data_classes
+workflow
 load_env
 plotter
 solvers

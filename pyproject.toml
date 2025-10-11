@@ -1,5 +1,5 @@
 [project]
-name = "wpt_tools"
+name = "wpt-tools"
 dynamic = ["version"]
 description = "Python package for analyzing wireless power systems"
 authors = [{ name = "t-sasatani", email = "sasatani.dev@gmail.com" }]
