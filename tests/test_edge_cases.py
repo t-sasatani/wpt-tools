@@ -5,7 +5,7 @@ import pytest
 import skrf as rf
 
 from wpt_tools.data_classes import RichNetwork
-from wpt_tools.solvers import compute_load_sweep, efficiency_calculator
+from wpt_tools.solver import compute_load_sweep, efficiency_calculator
 
 
 class TestEdgeCases:

@@ -91,8 +91,8 @@ class TestLCRFittingResults:
         # km is calculated dynamically, not stored as attribute
 
     @patch("builtins.print")
-    def test_print_tables(self, mock_print):
-        """Test print_tables method."""
+    def test_print_table(self, mock_print):
+        """Test print_table method."""
         results = LCRFittingResults()
         results.ls1.value = 1e-6
         results.ls1.r2 = 0.95
@@ -109,7 +109,7 @@ class TestLCRFittingResults:
         results.lm.value = 0.5e-6
         results.lm.r2 = 0.85
 
-        results.print_tables()
+        results.print_table()
 
         # Should call print multiple times for the tables
         assert mock_print.call_count > 0

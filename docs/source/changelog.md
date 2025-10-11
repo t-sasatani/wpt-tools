@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.8] - 2025-10-11
+
+### Changed
+- **Naming consistency**: Renamed `solvers.py` → `solver.py` and `plotter.py` → `plotter.py` for consistency
+- **Class naming**: Fixed `WPTToolsLogger` to follow proper Python conventions (WPT acronym preserved)
+- **Method naming**: Fixed `print_tables()` → `print_table()` for consistency with other methods
+- **Class structure**: Renamed `nw_tools` class → `NwTools` (PascalCase) with backward compatibility
+- **Documentation**: Updated all imports and references to use new naming conventions
+
+### Fixed
+- **File naming**: Removed duplicate `CHANGELOG.md` and generic `mymodule.log` files
+- **Test cleanup**: Removed duplicate test files after module renaming
+- **Import consistency**: Updated all imports across codebase, tests, and documentation
+- **Documentation links**: Fixed ReadTheDocs links and removed redundant CLI documentation
+
+### Improved
+- **Code organization**: Consistent singular module naming (`plotter.py`, `solver.py`)
+- **Test suite**: Cleaned up duplicate tests, now 34 unique tests
+- **Coverage**: Maintained 89% test coverage with cleaner structure
+- **Linting**: All code passes ruff, black, and isort formatting
+
 ## [0.1.7] - 2025-10-11
 
 ### Changed

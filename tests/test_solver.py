@@ -5,7 +5,7 @@ import pytest
 import skrf as rf
 
 from wpt_tools.data_classes import RichNetwork
-from wpt_tools.solvers import (
+from wpt_tools.solver import (
     compute_load_sweep,
     compute_rxc_filter,
     efficiency_calculator,

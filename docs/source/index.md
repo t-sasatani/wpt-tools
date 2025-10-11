@@ -46,7 +46,7 @@ data_classes
 workflow
 load_env
 plotter
-solvers
+solver
 logger
 ```
 

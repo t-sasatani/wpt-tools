@@ -10,7 +10,7 @@ from tabulate import tabulate
 from wpt_tools.data_classes import EfficiencyResults, LCRFittingResults, RichNetwork
 from wpt_tools.logger import WPTToolsLogger
 from wpt_tools.plotter import plot_efficiency, plot_impedance, plot_load_sweep
-from wpt_tools.solvers import (
+from wpt_tools.solver import (
     compute_load_sweep,
     compute_rxc_filter,
     efficiency_calculator,
@@ -49,7 +49,7 @@ class MinMax:
         self.step = step
 
 
-class nw_tools:
+class NwTools:
     """
     Stateless utilities for analyzing scikit-rf `rf.Network` objects.
     """
@@ -158,7 +158,7 @@ class nw_tools:
         results._nports = int(getattr(rich_nw.nw, "nports", 1))
 
         if show_data is True:
-            results.print_tables()
+            results.print_table()
 
         if show_plot is True:
             # Plot within the narrow range by default; overlay fits when available
@@ -238,3 +238,7 @@ class nw_tools:
         if show_plot:
             plot_load_sweep(results)
         return results
+
+
+# Create instance for backward compatibility
+nw_tools = NwTools()

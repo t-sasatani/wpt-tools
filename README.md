@@ -36,4 +36,5 @@ wpt demo
 ## Documentation
 
 - **Full documentation**: [https://wpt-tools.readthedocs.io/](https://wpt-tools.readthedocs.io/)
+- **Changelog**: [https://wpt-tools.readthedocs.io/en/latest/changelog.html](https://wpt-tools.readthedocs.io/en/latest/changelog.html)
 - **PyPI package**: [https://pypi.org/project/wpt-tools/](https://pypi.org/project/wpt-tools/)
