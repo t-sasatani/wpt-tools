@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.6] - 2024-10-10
+## [0.1.7] - 2025-10-11
+
+### Changed
+- Converted documentation from RST to Markdown
+- Refactored CLI to use Click with workflow separation
+- Enhanced test suite with regression testing
+- Updated license from AGPL-3.0 to Apache 2.0
+- Improved test coverage and documentation
+
+## [0.1.6] - 2025-10-10
 
 ### Added
 - Command line interface with `wpt` command
