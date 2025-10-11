@@ -1,4 +1,4 @@
-# wpt_tools -- {release}
+# wpt_tools
 
 ```{important}
 ⚠️ **Alpha Software** - This project is in active development. Features and APIs may change without notice.
