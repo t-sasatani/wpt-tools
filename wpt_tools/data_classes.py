@@ -158,7 +158,6 @@ class LCRFittingResults:
         print(
             tabulate(
                 [
-                    ["Fitting params (port 1)", "", ""],
                     ["Ls1", self.ls1.value, f"{self.ls1.r2:.3e}"],
                     ["Cs1", self.cs1.value, f"{self.cs1.r2:.3e}"],
                     ["Rs1", self.rs1.value, f"{self.rs1.r2:.3e}"],
@@ -181,7 +180,7 @@ class LCRFittingResults:
                         else ["Q_1 (approx.)", "", ""]
                     ),
                 ],
-                headers=["Parameter", "Value", "R2"],
+                headers=["Fitting params (port 1)", "Value", "R2"],
                 stralign="left",
                 numalign="right",
                 floatfmt=".3e",
@@ -193,7 +192,6 @@ class LCRFittingResults:
             print(
                 tabulate(
                     [
-                        ["Fitting params (port 2)", "", ""],
                         ["Ls2", self.ls2.value, f"{self.ls2.r2:.3e}"],
                         ["Cs2", self.cs2.value, f"{self.cs2.r2:.3e}"],
                         ["Rs2", self.rs2.value, f"{self.rs2.r2:.3e}"],
@@ -216,7 +214,7 @@ class LCRFittingResults:
                             else ["Q_2 (approx.)", "", ""]
                         ),
                     ],
-                    headers=["Parameter", "Value", "R2"],
+                    headers=["Fitting params (port 2)", "Value", "R2"],
                     stralign="left",
                     numalign="right",
                     floatfmt=".3e",
