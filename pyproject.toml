@@ -5,12 +5,12 @@ description = "Python package for analyzing wireless power systems"
 authors = [{ name = "t-sasatani", email = "sasatani.dev@gmail.com" }]
 requires-python = ">=3.11,<3.14"
 readme = "README.md"
-license = { text = "AGPL-3.0" }
+license = { text = "Apache-2.0" }
 keywords = ["wireless", "power", "transfer", "rf", "s-parameters", "analysis"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
