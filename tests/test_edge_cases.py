@@ -119,14 +119,14 @@ class TestEdgeCases:
         assert results.kq == pytest.approx(kq_true)
 
     def test_kq_undefined_for_nonpositive_efficiency(self):
-        """kQ is not real when the peak efficiency is outside (0, 1)."""
+        """KQ is not real when the peak efficiency is outside (0, 1)."""
         results = EfficiencyResults()
         results.max_eff_opt = -0.01
         with pytest.raises(ValueError):
             _ = results.kq
 
     def test_kq_raises_when_efficiency_missing(self):
-        """kQ requires a computed peak efficiency."""
+        """KQ requires a computed peak efficiency."""
         results = EfficiencyResults()
         with pytest.raises(ValueError):
             _ = results.kq

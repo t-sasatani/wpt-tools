@@ -88,6 +88,7 @@ class EfficiencyResults:
         ValueError
             If the maximum efficiency is unavailable or outside ``(0, 1)``,
             where kQ is not real (e.g. a network with no usable coupling).
+
         """
         if self.max_eff_opt is None:
             raise ValueError("EfficiencyResults.max_eff_opt is None")
