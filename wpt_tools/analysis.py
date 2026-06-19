@@ -128,6 +128,7 @@ class NwTools:
                     [
                         ["Target frequency", results.max_f_plot],
                         ["Maximum efficiency", results.max_eff_opt],
+                        ["Figure of merit kQ (approx.)", results._kq_display()],
                         ["Optimum Re(Zload)", results.max_r_opt],
                         ["Optimum Im(Zload)", results.max_x_opt],
                     ],

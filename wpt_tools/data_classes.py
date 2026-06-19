@@ -65,6 +65,52 @@ class EfficiencyResults:
         self.max_r_opt = None
         self.max_x_opt = None
 
+    @property
+    def kq(self) -> float:
+        """Approximate figure of merit kQ at the peak-efficiency point.
+
+        Inverts the efficiency relation used by the solver,
+        ``gmax = kQ**2 / (1 + sqrt(1 + kQ**2))**2``, which simplifies to
+        ``kQ = sqrt(s**2 - 1)`` with ``s = (1 + gmax) / (1 - gmax)``.
+
+        This is an approximation: it assumes the peak efficiency reflects the
+        ideal matched-load kQ relation. It does not hold in general (e.g. under
+        frequency shifting or other non-ideal conditions), so treat the value
+        as indicative rather than exact.
+
+        Returns
+        -------
+        float
+            The approximate figure of merit kQ.
+
+        Raises
+        ------
+        ValueError
+            If the maximum efficiency is unavailable or outside ``(0, 1)``,
+            where kQ is not real (e.g. a network with no usable coupling).
+
+        """
+        if self.max_eff_opt is None:
+            raise ValueError("EfficiencyResults.max_eff_opt is None")
+        gmax = float(self.max_eff_opt)
+        if not 0.0 < gmax < 1.0:
+            raise ValueError(
+                "kQ is undefined for maximum efficiency "
+                f"{gmax:.3e}; it requires 0 < gmax < 1."
+            )
+        s = (1.0 + gmax) / (1.0 - gmax)
+        return float(np.sqrt(s * s - 1.0))
+
+    def _kq_display(self) -> float:
+        """Return kQ for display, or NaN when it is undefined.
+
+        NaN keeps the table column numeric so float formatting still applies.
+        """
+        try:
+            return self.kq
+        except ValueError:
+            return float("nan")
+
     def print_table(self) -> None:
         """Print a summary table of peak efficiency and optimal load."""
         self.validate()
@@ -85,6 +131,7 @@ class EfficiencyResults:
                 [
                     ["Target frequency", self.max_f_plot],
                     ["Maximum efficiency", self.max_eff_opt],
+                    ["Figure of merit kQ (approx.)", self._kq_display()],
                     ["Optimum Re(Zload)", self.max_r_opt],
                     ["Optimum Im(Zload)", self.max_x_opt],
                 ],
