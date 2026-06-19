@@ -426,6 +426,17 @@ class RichNetwork:
         if self.sweeppoint is None:
             self.sweeppoint = int(np.size(self.nw.frequency.f))
 
+        if self.sweeppoint <= 0:
+            raise ValueError("Network has no frequency points")
+
+        # Single-point sweeps are valid for quick checks/reporting. In that case,
+        # use the only available point regardless of the requested target/range.
+        if self.sweeppoint == 1:
+            self.f_narrow_index_start = 0
+            self.f_narrow_index_stop = 1
+            self.target_f_index = 0
+            return
+
         self.f_narrow_index_start = int(self.sweeppoint)
         self.f_narrow_index_stop = 0
 
@@ -455,6 +466,29 @@ def override_frange(
     - If both are provided, applies set_f_target_range.
     - Otherwise, validates existing values and computes missing indices.
     """
+    # Ensure sweeppoint is known before deciding how to resolve target/range.
+    if rich_nw.sweeppoint is None:
+        rich_nw.sweeppoint = int(np.size(rich_nw.nw.frequency.f))
+
+    # Single-frequency networks have only one point to analyze, so target_f and
+    # range_f are optional: fall back to the one available frequency.
+    if rich_nw.sweeppoint == 1:
+        f0 = float(rich_nw.nw.frequency.f[0])
+        resolved_target = (
+            target_f
+            if target_f is not None
+            else (rich_nw.target_f if rich_nw.target_f is not None else f0)
+        )
+        resolved_range = (
+            range_f
+            if range_f is not None
+            else (rich_nw.range_f if rich_nw.range_f is not None else max(f0, 1.0))
+        )
+        rich_nw.set_f_target_range(
+            target_f=float(resolved_target), range_f=float(resolved_range)
+        )
+        return rich_nw
+
     # If caller provided both, compute and set derived fields.
     if target_f is not None and range_f is not None:
         rich_nw.set_f_target_range(target_f=float(target_f), range_f=float(range_f))
@@ -464,9 +498,6 @@ def override_frange(
             raise ValueError(
                 "Target frequency is not set. Provide target_f and range_f or call set_f_target_range."
             )
-        # Ensure sweeppoint at minimum.
-        if rich_nw.sweeppoint is None:
-            rich_nw.sweeppoint = int(np.size(rich_nw.nw.frequency.f))
         # If indices are not computed yet, compute them using existing target/range
         if (
             rich_nw.f_narrow_index_start is None
