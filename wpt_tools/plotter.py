@@ -292,7 +292,7 @@ def plot_load_sweep(results: OptimalLoadGridResults):
         results.eff_grid,
         cmap="hot",
         vmin=0,
-        vmax=1,
+        vmax=results.eff_grid.max(),
         shading="auto",
     )
     fig.colorbar(c, ax=axs[0])

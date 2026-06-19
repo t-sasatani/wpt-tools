@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import skrf as rf
 
+from wpt_tools.analysis import nw_tools
 from wpt_tools.data_classes import RichNetwork
 from wpt_tools.solver import compute_load_sweep, efficiency_calculator
 
@@ -42,12 +43,69 @@ class TestEdgeCases:
 
         nw = rf.Network(frequency=f, s=s)
         rich_nw = RichNetwork.from_touchstone(nw)
+        rich_nw.set_f_target_range(13.56e6, 1e6)
 
-        # This should work with single frequency
-        rich_nw.set_f_target_range(1e9, 0.1e6)
+        # This should work even when target_f does not match the only point.
+        rich_nw.set_f_target_range(13.56e6, 0.1e6)
 
-        assert rich_nw.target_f == 1e9
+        assert rich_nw.target_f == 13.56e6
         assert rich_nw.range_f == 0.1e6
+        assert rich_nw.target_f_index == 0
+        assert rich_nw.f_narrow_index_start == 0
+        assert rich_nw.f_narrow_index_stop == 1
+
+    def test_single_frequency_skips_efficiency_plot(self, monkeypatch):
+        """Single-frequency data should skip frequency plotting gracefully."""
+        f = np.array([1e9])
+        s = np.zeros((1, 2, 2), dtype=complex)
+        s[0, 0, 0] = 0.1
+        s[0, 1, 1] = 0.1
+        s[0, 0, 1] = 0.9
+        s[0, 1, 0] = 0.9
+
+        nw = rf.Network(frequency=f, s=s)
+        rich_nw = RichNetwork.from_touchstone(nw)
+
+        called = {"plot": False}
+
+        def _stub_plot_efficiency(*args, **kwargs):
+            called["plot"] = True
+
+        monkeypatch.setattr("wpt_tools.analysis.plot_efficiency", _stub_plot_efficiency)
+
+        results = nw_tools.analyze_efficiency(
+            rich_nw=rich_nw,
+            rx_port=2,
+            show_plot=True,
+            show_data=False,
+            target_f=13.56e6,
+            range_f=1e6,
+        )
+
+        # Plotting is skipped, but the single point must still be analyzed even
+        # though the requested target_f does not match the only frequency.
+        assert called["plot"] is False
+        assert results.max_eff_opt is not None
+        assert results.f_plot == [1e9]
+
+    def test_single_frequency_runs_without_target_range(self):
+        """Single-frequency analysis should work with no target_f/range_f."""
+        f = np.array([1e9])
+        s = np.zeros((1, 2, 2), dtype=complex)
+        s[0, 0, 0] = 0.1
+        s[0, 1, 1] = 0.1
+        s[0, 0, 1] = 0.9
+        s[0, 1, 0] = 0.9
+
+        nw = rf.Network(frequency=f, s=s)
+        rich_nw = RichNetwork.from_touchstone(nw)
+
+        results = nw_tools.analyze_efficiency(
+            rich_nw=rich_nw, rx_port=2, show_plot=False, show_data=False
+        )
+
+        assert results.max_eff_opt is not None
+        assert results.f_plot == [1e9]
 
     def test_efficiency_calculator_zero_efficiency(self):
         """Test efficiency calculator with network that gives zero efficiency."""
