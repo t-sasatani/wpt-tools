@@ -5,7 +5,7 @@ import pytest
 import skrf as rf
 
 from wpt_tools.analysis import nw_tools
-from wpt_tools.data_classes import RichNetwork
+from wpt_tools.data_classes import EfficiencyResults, RichNetwork
 from wpt_tools.solver import compute_load_sweep, efficiency_calculator
 
 
@@ -106,6 +106,30 @@ class TestEdgeCases:
 
         assert results.max_eff_opt is not None
         assert results.f_plot == [1e9]
+
+    def test_kq_inverts_efficiency_relation(self):
+        """results.kq should invert the solver's gmax(kQ) relation."""
+        kq_true = 5.0
+        # Forward relation used by efficiency_calculator.
+        gmax = kq_true**2 / (1.0 + np.sqrt(1.0 + kq_true**2)) ** 2
+
+        results = EfficiencyResults()
+        results.max_eff_opt = float(gmax)
+
+        assert results.kq == pytest.approx(kq_true)
+
+    def test_kq_undefined_for_nonpositive_efficiency(self):
+        """kQ is not real when the peak efficiency is outside (0, 1)."""
+        results = EfficiencyResults()
+        results.max_eff_opt = -0.01
+        with pytest.raises(ValueError):
+            _ = results.kq
+
+    def test_kq_raises_when_efficiency_missing(self):
+        """kQ requires a computed peak efficiency."""
+        results = EfficiencyResults()
+        with pytest.raises(ValueError):
+            _ = results.kq
 
     def test_efficiency_calculator_zero_efficiency(self):
         """Test efficiency calculator with network that gives zero efficiency."""
