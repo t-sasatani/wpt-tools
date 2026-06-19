@@ -5,6 +5,7 @@ Analysis code for wireless power transfer systems.
 from dataclasses import dataclass
 from typing import Literal, Optional
 
+import numpy as np
 from tabulate import tabulate
 
 from wpt_tools.data_classes import EfficiencyResults, LCRFittingResults, RichNetwork
@@ -55,6 +56,24 @@ class NwTools:
     """
 
     @staticmethod
+    def _is_single_frequency(rich_nw: RichNetwork) -> bool:
+        """Return True when only one frequency point is available."""
+        return int(np.size(rich_nw.nw.frequency.f)) <= 1
+
+    @staticmethod
+    def _skip_plot_for_single_frequency(
+        rich_nw: RichNetwork, *, plot_name: str
+    ) -> bool:
+        """Log and skip frequency-domain plotting for one-point networks."""
+        if NwTools._is_single_frequency(rich_nw):
+            logger.info(
+                "Skipping %s because the network has a single frequency point.",
+                plot_name,
+            )
+            return True
+        return False
+
+    @staticmethod
     def analyze_efficiency(
         rich_nw: RichNetwork,
         rx_port: int = 2,
@@ -98,7 +117,9 @@ class NwTools:
             rich_nw, rx_port=rx_port, target_f=target_f, range_f=range_f
         )
 
-        if show_plot is True:
+        if show_plot is True and not NwTools._skip_plot_for_single_frequency(
+            rich_nw, plot_name="efficiency plot"
+        ):
             plot_efficiency(results, rich_nw)
 
         if show_data is True:
@@ -160,7 +181,9 @@ class NwTools:
         if show_data is True:
             results.print_table()
 
-        if show_plot is True:
+        if show_plot is True and not NwTools._skip_plot_for_single_frequency(
+            rich_nw, plot_name="impedance fit plot"
+        ):
             # Plot within the narrow range by default; overlay fits when available
             plot_impedance(
                 rich_nw, results=results, full_range=False, target_f=target_f
