@@ -105,6 +105,67 @@ class TestEfficiencyCalculator:
         with pytest.raises(ValueError, match="Range frequency is not set"):
             efficiency_calculator(rich_nw, rx_port=1, target_f=1.5e9, range_f=None)
 
+    @staticmethod
+    def _rm_network():
+        """Single-frequency network with non-zero mutual resistance Rm.
+
+        Measured 10 MHz sample (TX stretchable coil, RX 30x30 mm coil, air).
+        """
+        z11 = 4.18 + 38.49j
+        z22 = 1.32 - 1.69j
+        zm = 0.836 + 28.171j
+        z = np.array([[[z11, zm], [zm, z22]]], dtype=complex)
+        nw = rf.Network.from_z(z, frequency=rf.Frequency.from_f([10e6], unit="Hz"))
+        return RichNetwork.from_touchstone(nw), z11, z22, zm
+
+    @staticmethod
+    def _efficiency(z11, z22, zm, zload):
+        """Link efficiency of the two-port terminated with ``zload`` at port 2."""
+        zin = z11 - zm**2 / (z22 + zload)
+        return zload.real * abs(zm / (z22 + zload)) ** 2 / zin.real
+
+    def test_x_opt_closed_form_with_mutual_resistance(self):
+        """x_opt must be Rm*Xm/R11 - X22, not Rm*Xm - X22 (regression)."""
+        rich_nw, z11, z22, zm = self._rm_network()
+
+        results = efficiency_calculator(rich_nw, rx_port=2, target_f=None, range_f=None)
+
+        r_det = z11.real * z22.real - zm.real**2
+        expected_r = np.sqrt(r_det * (r_det + abs(zm) ** 2)) / z11.real
+        expected_x = zm.real * zm.imag / z11.real - z22.imag
+
+        assert results.max_r_opt == pytest.approx(expected_r, rel=1e-9)
+        assert results.max_x_opt == pytest.approx(expected_x, rel=1e-9)
+        assert results.max_x_opt == pytest.approx(7.3242, abs=1e-4)
+
+    def test_x_opt_load_reaches_max_efficiency(self):
+        """Efficiency at the reported optimum equals max_eff_opt and is a maximum."""
+        rich_nw, z11, z22, zm = self._rm_network()
+
+        results = efficiency_calculator(rich_nw, rx_port=2, target_f=None, range_f=None)
+        zload_opt = results.max_r_opt + 1j * results.max_x_opt
+        eff_opt = self._efficiency(z11, z22, zm, zload_opt)
+
+        assert eff_opt == pytest.approx(results.max_eff_opt, abs=1e-9)
+
+        for dr, dx in [(0.5, 0.0), (-0.5, 0.0), (0.0, 0.5), (0.0, -0.5), (0.3, -0.3)]:
+            eff_perturbed = self._efficiency(z11, z22, zm, zload_opt + dr + 1j * dx)
+            assert eff_perturbed < eff_opt
+
+        # The pre-fix formula (Rm*Xm - X22) gave a visibly worse load.
+        zload_buggy = results.max_r_opt + 1j * (zm.real * zm.imag - z22.imag)
+        assert self._efficiency(z11, z22, zm, zload_buggy) < eff_opt - 0.05
+
+    def test_x_opt_rx_port_swap(self):
+        """rx_port=1 must apply the same formula with the ports swapped."""
+        rich_nw, z11, z22, zm = self._rm_network()
+
+        results = efficiency_calculator(rich_nw, rx_port=1, target_f=None, range_f=None)
+        # Now the receiver is the original port 1, transmitter is port 2.
+        expected_x = zm.real * zm.imag / z22.real - z11.imag
+
+        assert results.max_x_opt == pytest.approx(expected_x, rel=1e-9)
+
 
 class TestComputeLoadSweep:
     """Test compute_load_sweep function."""

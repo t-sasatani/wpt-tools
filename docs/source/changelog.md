@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.11] - 2026-10-14
+
+### Fixed
+- **Optimal load reactance**: `efficiency_calculator()` computed `x_opt` as `Rm*Xm - X22`
+  because of an operator-precedence slip. It now returns the correct maximum-efficiency
+  load reactance `Rm*Xm/R11 - X22`. `max_eff_opt` and `r_opt` were unaffected. The error
+  was invisible for purely inductive coupling (`Rm = 0`) and grows with `Rm*Xm`.
+  The archived `max_x_opt` regression values were regenerated accordingly.
+
+### Added
+- Regression tests checking `x_opt` against the closed form, a brute-force efficiency
+  maximum and the `rx_port` swap, using a measured network with non-zero `Rm`.
+
 ## [0.1.8] - 2025-10-11
 
 ### Changed
