@@ -50,7 +50,7 @@ def efficiency_calculator(
     target_f: Optional[float],
     range_f: Optional[float],
 ) -> EfficiencyResults:
-    """Compute efficiency vectors and maxima.
+    r"""Compute efficiency vectors and maxima.
 
     Parameters
     ----------
@@ -67,6 +67,21 @@ def efficiency_calculator(
     -------
     EfficiencyResults
         The results of the efficiency solver.
+
+    Notes
+    -----
+    With the receiver port as ``Z22``, the transmitter port as ``Z11`` and the
+    mutual impedance ``Zm = Rm + jXm``, the maximum-efficiency load is
+
+    .. math::
+
+        r_{det} = R_{11} R_{22} - R_m^2
+
+        R_L = \frac{\sqrt{r_{det} (r_{det} + |Z_m|^2)}}{R_{11}}
+
+        X_L = \frac{R_m X_m}{R_{11}} - X_{22}
+
+    ``x_opt`` therefore reduces to ``-X22`` only when ``Rm`` is zero.
 
     """
     single_frequency = int(np.size(rich_nw.nw.frequency.f)) == 1
@@ -106,7 +121,7 @@ def efficiency_calculator(
 
         kq2_temp = (Zm.real**2 + Zm.imag**2) / r_det_temp
         r_opt_temp = r_det_temp / Z11.real * np.sqrt(1 + kq2_temp)
-        x_opt_temp = Zm.real * Zm.imag - Z11.real * Z22.imag / Z11.real
+        x_opt_temp = Zm.real * Zm.imag / Z11.real - Z22.imag
         eff_opt_temp = kq2_temp / (1 + np.sqrt(1 + kq2_temp)) ** 2
 
         results.f_plot.append(float(f_temp))
