@@ -196,6 +196,34 @@ def compute_load_sweep(
     )
 
 
+def solve_cpcs_closed_form(
+    z_target: complex, rload: float, omega: float
+) -> Optional[tuple[float, float]]:
+    """Closed-form Cp/Cs so that a Cp || (Cs + Rload) network presents ``z_target``.
+
+    The network admittance is ``Y = j*w*Cp + 1/(Rload - j/(w*Cs))``. Matching
+    its real part to ``Re(1/z_target)`` fixes the series reactance
+    ``Xs = 1/(w*Cs)``; the imaginary part then fixes ``Cp``.
+
+    Returns ``None`` when no positive ``(Cp, Cs)`` pair exists, which happens
+    when ``|z_target|**2 < Re(z_target) * Rload`` (``Rload`` too small to be
+    stepped down to ``Re(z_target)``) or when the required shunt element would
+    have to be inductive.
+    """
+    mag2 = abs(z_target) ** 2
+    if z_target.real <= 0 or rload <= 0 or mag2 == 0:
+        return None
+    xs2 = rload * mag2 / z_target.real - rload**2
+    if xs2 <= 0:
+        return None
+    xs = float(np.sqrt(xs2))
+    cp = (-z_target.imag / mag2 - xs / (rload**2 + xs**2)) / omega
+    if cp <= 0:
+        return None
+    cs = 1.0 / (omega * xs)
+    return float(cp), float(cs)
+
+
 def compute_rxc_filter(
     rich_nw: RichNetwork,
     rx_port: Literal[1, 2],
@@ -205,7 +233,23 @@ def compute_rxc_filter(
     target_f: Optional[float] = None,
     range_f: Optional[float] = None,
 ) -> RXCFilterResults:
-    """Compute receiver capacitor values for a target load at the optimal point."""
+    """Compute receiver capacitor values so the load matches the optimal point.
+
+    The receiver coil must see the maximum-efficiency load
+    ``Z_opt = max_r_opt + 1j * max_x_opt`` from :func:`efficiency_calculator`.
+    ``Z_opt`` is defined at the coil terminals and already accounts for the
+    coil's own reactance (``x_opt`` is essentially ``-X22``), so the matching
+    network alone must present ``Z_opt``::
+
+        Z_network(Cp, Cs) = 1 / (j*w*Cp + 1 / (Rload + 1 / (j*w*Cs)))  ==  Z_opt
+
+    ``Cp`` and ``Cs`` are solved in closed form when a positive pair exists and
+    refined by a bounded optimiser; otherwise the optimiser returns the closest
+    realisable impedance and a warning is logged.
+
+    ``lrx`` in the result is the fitted receiver-coil inductance, reported for
+    reference only; it does not enter the design.
+    """
     rich_nw = override_frange(rich_nw, target_f=target_f, range_f=range_f)
 
     fit = lcr_fitting(rich_nw, target_f=target_f, range_f=range_f)
@@ -229,37 +273,31 @@ def compute_rxc_filter(
     else:
         lrx = float(fit.ls1.value)
 
+    z_target = complex(max_r_opt, max_x_opt)
+
     def Z(params):
         if c_network == "CpCsRl":
             cp, cs = params
-            return (
-                1 / ((1j * max_w_plot * cp) + 1 / (1 / (1j * max_w_plot * cs) + rload))
-                + 1j * max_w_plot * lrx
+            return 1 / (
+                (1j * max_w_plot * cp) + 1 / (1 / (1j * max_w_plot * cs) + rload)
             )
         raise NotImplementedError(f"Unsupported c_network: {c_network}")
 
-    def Zerror(params):
-        Zp = Z(params)
-        # Legacy behavior: match Re(Z) to Ropt and drive Im(Z) to 0
-        return np.linalg.norm([Zp.real - max_r_opt, Zp.imag])
-
     # Use log-domain bounded optimization to avoid sticking at bounds
-    # Heuristic initial guess: cancel imag with series Cs ~ 1/(w^2 L), small Cp
-    cs_heur = max(min(1.0 / (max_w_plot**2 * max(lrx, 1e-12)), 1e-6), 1e-13)
-    cp_heur = 1e-12
-    y0 = np.log10([cp_heur, cs_heur])
     ybounds = [(-13.0, -6.0), (-13.0, -6.0)]
 
-    def Z_y(y):
-        c = 10.0 ** np.asarray(y, dtype=float)
-        return Z(c)
-
     def Zerror_y(y):
-        Zp = Z_y(y)
-        return np.linalg.norm([Zp.real - max_r_opt, Zp.imag])
+        c = 10.0 ** np.asarray(y, dtype=float)
+        return abs(Z(c) - z_target)
 
-    seeds = [
-        y0,
+    seeds = []
+    closed_form = solve_cpcs_closed_form(z_target, rload, max_w_plot)
+    if closed_form is not None:
+        seeds.append(np.log10(closed_form))
+    # Heuristic fallbacks: series Cs cancelling the target reactance, small Cp
+    cs_heur = max(min(1.0 / (max_w_plot * max(abs(max_x_opt), 1e-3)), 1e-6), 1e-13)
+    seeds += [
+        np.log10([1e-12, cs_heur]),
         np.log10([5e-13, cs_heur]),
         np.log10([5e-12, cs_heur * 0.5]),
         np.log10([1e-11, cs_heur * 2.0]),
@@ -277,6 +315,16 @@ def compute_rxc_filter(
             best = res
 
     cp, cs = (10.0 ** float(best.x[0])), (10.0 ** float(best.x[1]))
+    mismatch = abs(Z((cp, cs)) - z_target) / abs(z_target)
+    if mismatch > 1e-3:
+        logger.warning(
+            "RXC filter cannot realise the optimal load %s with Rload=%g ohm; "
+            "closest network impedance is %s (relative error %.2e).",
+            f"{z_target:.3f}",
+            rload,
+            f"{Z((cp, cs)):.3f}",
+            mismatch,
+        )
     logger.info(np.array([cp, cs]))
 
     return RXCFilterResults(

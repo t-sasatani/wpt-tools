@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- **RXC filter design**: `compute_rxc_filter()` resonated the fitted receiver inductance
+  (`Im(Z_network + j*w*Lrx) -> 0`) instead of presenting the maximum-efficiency load
+  `R_opt + j*X_opt` at the coil terminals. `X_opt` already includes the coil reactance, so
+  the inductance was double counted and the design missed the optimum badly on self-tuned
+  coils (0.4% vs 52% efficiency on the bundled sample, port 2). The network is now solved
+  against `R_opt + j*X_opt` directly, with a closed-form `Cp`/`Cs` solution
+  (`solve_cpcs_closed_form()`) used as the optimiser seed. A warning is logged when the
+  `Cp`/`Cs` topology cannot realise the target (e.g. inductive `X_opt`).
+  `RXCFilterResults.lrx` is kept for reference but no longer enters the design.
+  The archived `rxc_filter` regression values were regenerated accordingly.
+
+### Added
+- Tests verifying the RXC design through independent routes: network impedance equals the
+  optimal load, an algebraic closed form, an ABCD-matrix circuit simulation, and direct
+  maximisation of the simulated efficiency.
+
 ## [0.1.11] - 2026-10-14
 
 ### Fixed

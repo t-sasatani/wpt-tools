@@ -1,8 +1,11 @@
 """Tests for solver functions."""
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 import skrf as rf
+from scipy.optimize import minimize
 
 from wpt_tools.data_classes import RichNetwork
 from wpt_tools.solver import (
@@ -13,7 +16,10 @@ from wpt_tools.solver import (
     series_lcr_rself,
     series_lcr_xm,
     series_lcr_xself,
+    solve_cpcs_closed_form,
 )
+
+SAMPLE_S2P = Path(__file__).parent / "data" / "sample.s2p"
 
 
 class TestSeriesLCRFunctions:
@@ -277,6 +283,193 @@ class TestComputeRXCFilter:
         assert results.cp > 0
         assert results.cs > 0
         assert results.rload == 100.0
+
+
+class TestRXCFilterDesign:
+    """Verify the RXC filter realises the maximum-efficiency load.
+
+    The checks deliberately use routes that are independent of each other and
+    of the solver's own Z-matrix efficiency formula:
+
+    * the network impedance equals ``R_opt + j*X_opt`` (solver target),
+    * a closed form derived here from the admittance equations,
+    * an ABCD-matrix circuit simulation of coil + Cp + Cs + Rload,
+    * a direct numerical maximisation of that simulated efficiency.
+    """
+
+    RLOAD = 100.0
+    TARGET_F = 8e6
+    RANGE_F = 2.8e6
+
+    @staticmethod
+    def reciprocal_sample():
+        """Measured sample with Z21 := Z12 so the two-port is exactly reciprocal.
+
+        The solver uses Z12 as the mutual impedance; the raw measurement has a
+        ~0.7% Z12/Z21 asymmetry that would otherwise dominate the comparison.
+        """
+        nw = rf.Network(str(SAMPLE_S2P))
+        z = nw.z.copy()
+        z[:, 1, 0] = z[:, 0, 1]
+        return RichNetwork.from_touchstone(rf.Network.from_z(z, frequency=nw.frequency))
+
+    @staticmethod
+    def z_network(cp, cs, rload, w):
+        """Impedance of the Cp || (Cs + Rload) network seen from the coil."""
+        return 1 / (1j * w * cp + 1 / (rload + 1 / (1j * w * cs)))
+
+    @staticmethod
+    def abcd_efficiency(nw, f_index, cp, cs, rload):
+        """Pload/Pin from an ABCD cascade: coil -> shunt Cp -> series Cs -> Rload.
+
+        Power flows from port 1 to port 2 of ``nw``; callers flip the network
+        when the receiver is port 1.
+        """
+        w = 2 * np.pi * nw.frequency.f[f_index]
+        shunt = np.array([[1, 0], [1j * w * cp, 1]])
+        series = np.array([[1, 1 / (1j * w * cs)], [0, 1]])
+        chain = nw.a[f_index] @ shunt @ series
+        v_load = 1.0
+        i_load = v_load / rload
+        v_in, i_in = chain @ np.array([v_load, i_load])
+        p_load = (v_load * np.conj(i_load)).real
+        p_in = (v_in * np.conj(i_in)).real
+        return p_load / p_in
+
+    def design(self, rx_port):
+        """Run the RXC design and gather what the verification routes need."""
+        rich_nw = self.reciprocal_sample()
+        res = compute_rxc_filter(
+            rich_nw,
+            rx_port=rx_port,
+            rload=self.RLOAD,
+            target_f=self.TARGET_F,
+            range_f=self.RANGE_F,
+        )
+        eff = efficiency_calculator(
+            rich_nw, rx_port=rx_port, target_f=self.TARGET_F, range_f=self.RANGE_F
+        )
+        f_index = int(np.argmin(np.abs(rich_nw.nw.frequency.f - res.max_f_plot)))
+        net = rich_nw.nw if rx_port == 2 else rich_nw.nw.flipped()
+        return res, eff, net, f_index
+
+    @pytest.mark.parametrize("rx_port", [1, 2])
+    def test_network_presents_optimal_load(self, rx_port):
+        """Route 1: Z_network(Cp, Cs) == R_opt + j*X_opt at the coil terminals."""
+        res, eff, _, _ = self.design(rx_port)
+        w = 2 * np.pi * res.max_f_plot
+        z_net = self.z_network(res.cp, res.cs, self.RLOAD, w)
+        z_opt = complex(eff.max_r_opt, eff.max_x_opt)
+
+        assert abs(z_net - z_opt) / abs(z_opt) < 1e-6
+        assert res.cp > 0 and res.cs > 0
+
+    @pytest.mark.parametrize("rx_port", [1, 2])
+    def test_matches_independent_closed_form(self, rx_port):
+        """Route 2: Cp, Cs agree with an algebraic solution derived here."""
+        res, eff, _, _ = self.design(rx_port)
+        w = 2 * np.pi * res.max_f_plot
+        z_opt = complex(eff.max_r_opt, eff.max_x_opt)
+
+        # Y_net = j*w*Cp + 1/(Rload - j*Xs) with Xs = 1/(w*Cs) must equal 1/Z_opt.
+        y_opt = 1 / z_opt
+        # Re(Y): Rload / (Rload^2 + Xs^2) = Re(y_opt)
+        xs = np.sqrt(self.RLOAD / y_opt.real - self.RLOAD**2)
+        cs_expected = 1 / (w * xs)
+        # Im(Y): w*Cp + Xs / (Rload^2 + Xs^2) = Im(y_opt)
+        cp_expected = (y_opt.imag - xs / (self.RLOAD**2 + xs**2)) / w
+
+        assert res.cs == pytest.approx(cs_expected, rel=1e-6)
+        assert res.cp == pytest.approx(cp_expected, rel=1e-6)
+
+    @pytest.mark.parametrize("rx_port", [1, 2])
+    def test_abcd_simulation_reaches_max_efficiency(self, rx_port):
+        """Route 3: circuit simulation of coil + network + Rload hits max_eff_opt."""
+        res, eff, net, f_index = self.design(rx_port)
+
+        eff_sim = self.abcd_efficiency(net, f_index, res.cp, res.cs, self.RLOAD)
+        assert eff_sim == pytest.approx(eff.max_eff_opt, abs=1e-9)
+
+        # The design is a maximum: detuning either capacitor lowers efficiency.
+        for dcp, dcs in [(1.05, 1.0), (0.95, 1.0), (1.0, 1.05), (1.0, 0.95)]:
+            eff_detuned = self.abcd_efficiency(
+                net, f_index, res.cp * dcp, res.cs * dcs, self.RLOAD
+            )
+            assert eff_detuned < eff_sim
+
+    @pytest.mark.parametrize("rx_port", [1, 2])
+    def test_direct_efficiency_maximisation_agrees(self, rx_port):
+        """Route 4: maximising simulated efficiency over (Cp, Cs) finds the same values."""
+        res, eff, net, f_index = self.design(rx_port)
+
+        def neg_eff(y):
+            return -self.abcd_efficiency(
+                net, f_index, 10 ** y[0], 10 ** y[1], self.RLOAD
+            )
+
+        # Start deliberately off the solution.
+        y0 = [np.log10(res.cp) + 0.3, np.log10(res.cs) - 0.3]
+        opt = minimize(
+            neg_eff,
+            y0,
+            method="Nelder-Mead",
+            options={"xatol": 1e-12, "fatol": 1e-15, "maxiter": 20000},
+        )
+
+        assert -opt.fun == pytest.approx(eff.max_eff_opt, abs=1e-9)
+        assert 10 ** opt.x[0] == pytest.approx(res.cp, rel=1e-4)
+        assert 10 ** opt.x[1] == pytest.approx(res.cs, rel=1e-4)
+
+    def test_pre_fix_design_was_far_from_optimum(self):
+        """Document the bug: resonating the fitted coil inductance misses badly."""
+        res, eff, net, f_index = self.design(2)
+        w = 2 * np.pi * res.max_f_plot
+
+        # Legacy target: Z_network + j*w*Lrx == R_opt (imaginary part driven to 0).
+        z_legacy = complex(eff.max_r_opt, -w * res.lrx)
+        cp_old, cs_old = solve_cpcs_closed_form(z_legacy, self.RLOAD, w)
+        eff_old = self.abcd_efficiency(net, f_index, cp_old, cs_old, self.RLOAD)
+
+        assert eff_old < 0.05
+        assert eff.max_eff_opt > 0.5
+
+    def test_closed_form_roundtrip(self):
+        """solve_cpcs_closed_form returns capacitors that reproduce the target."""
+        w = 2 * np.pi * 6.78e6
+        for z_target in [10 - 250j, 7.75 - 198.6j, 2 - 50j, 40 - 400j]:
+            cp, cs = solve_cpcs_closed_form(z_target, 100.0, w)
+            assert cp > 0 and cs > 0
+            z_net = self.z_network(cp, cs, 100.0, w)
+            assert z_net == pytest.approx(z_target, rel=1e-12)
+
+    def test_closed_form_unrealisable(self):
+        """No positive Cp/Cs exists for inductive targets or too-small Rload."""
+        w = 2 * np.pi * 10e6
+        # Inductive optimum (positive X_opt) cannot be built from two capacitors.
+        assert solve_cpcs_closed_form(14.85 + 7.33j, 100.0, w) is None
+        # |Z|^2 < Re(Z) * Rload: Rload cannot be stepped down to Re(Z).
+        assert solve_cpcs_closed_form(10 - 5j, 100.0, w) is None
+
+    def test_warns_when_optimum_not_realisable(self, caplog):
+        """A network with positive X_opt gets a best-effort design and a warning."""
+        # Short sweep around 10 MHz with the Rm != 0 impedances of
+        # TestEfficiencyCalculator._rm_network (reactances scaled with f so the
+        # LCR fit inside compute_rxc_filter has something to fit).
+        f = np.linspace(9.9e6, 10.1e6, 5)
+        scale = f / 10e6
+        z11 = 4.18 + 38.49j * scale
+        z22 = 1.32 - 1.69j * scale
+        zm = 0.836 + 28.171j * scale
+        z = np.stack([np.stack([z11, zm], -1), np.stack([zm, z22], -1)], -2)
+        nw = rf.Network.from_z(z, frequency=rf.Frequency.from_f(f, unit="Hz"))
+        rich_nw = RichNetwork.from_touchstone(nw)
+        with caplog.at_level("WARNING", logger="wpt_tools.solver"):
+            res = compute_rxc_filter(
+                rich_nw, rx_port=2, rload=100.0, target_f=10e6, range_f=0.3e6
+            )
+        assert res.max_x_opt > 0  # inductive optimum: unrealisable with Cp/Cs
+        assert res.cp > 0 and res.cs > 0
+        assert any("cannot realise" in rec.getMessage() for rec in caplog.records)
 
 
 class TestLCRFitting:
