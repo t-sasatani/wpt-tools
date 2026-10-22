@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.2.0] - 2026-10-22
 
 ### Fixed
 - **RXC filter design**: `compute_rxc_filter()` resonated the fitted receiver inductance
@@ -15,22 +15,20 @@ All notable changes to this project will be documented in this file.
   `Cp`/`Cs` topology cannot realise the target (e.g. inductive `X_opt`).
   `RXCFilterResults.lrx` is kept for reference but no longer enters the design.
   The archived `rxc_filter` regression values were regenerated accordingly.
-
-### Added
-- Tests verifying the RXC design through independent routes: network impedance equals the
-  optimal load, an algebraic closed form, an ABCD-matrix circuit simulation, and direct
-  maximisation of the simulated efficiency.
-
-## [0.1.11] - 2026-10-14
-
-### Fixed
 - **Optimal load reactance**: `efficiency_calculator()` computed `x_opt` as `Rm*Xm - X22`
   because of an operator-precedence slip. It now returns the correct maximum-efficiency
   load reactance `Rm*Xm/R11 - X22`. `max_eff_opt` and `r_opt` were unaffected. The error
   was invisible for purely inductive coupling (`Rm = 0`) and grows with `Rm*Xm`.
   The archived `max_x_opt` regression values were regenerated accordingly.
+- **Regression test robustness**: fitted series capacitances are compared through their
+  reactance, so an unidentifiable `Cs` (negligible next to `w*L`) no longer fails on
+  runners with a different BLAS (macOS 26 images).
 
 ### Added
+- Tests verifying the RXC design through independent routes: network impedance equals the
+  optimal load, an algebraic closed form, an ABCD-matrix circuit simulation, direct
+  maximisation of the simulated efficiency, and an ngspice AC analysis (skipped when
+  `ngspice` is not installed).
 - Regression tests checking `x_opt` against the closed form, a brute-force efficiency
   maximum and the `rx_port` swap, using a measured network with non-zero `Rm`.
 
